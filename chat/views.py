@@ -1,15 +1,18 @@
+from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Message
-from .serializers import MessageSerializer
+from .models import Message, User
+from .serializers import MessageSerializer, UserSerializer
 from django.core.files.storage import FileSystemStorage
 from django.contrib.sessions.models import Session
 from datetime import datetime, timedelta
 import logging
 
-# تنظیم لاگ برای دیباگ
 logger = logging.getLogger(__name__)
+
+def index(request):
+    return render(request, 'index.html')
 
 class MessageList(APIView):
     def get(self, request):
@@ -27,9 +30,7 @@ class MessageList(APIView):
 
 class UserList(APIView):
     def get(self, request):
-        # حذف session‌های منقضی‌شده
         Session.objects.filter(expire_date__lt=datetime.now()).delete()
-
         sessions = Session.objects.all()
         users = []
         now = datetime.now()
@@ -42,25 +43,51 @@ class UserList(APIView):
             if username and last_activity:
                 last_activity_time = datetime.fromisoformat(last_activity)
                 is_online = last_activity_time > five_minutes_ago
-                users.append({'username': username, 'is_online': is_online})
+                try:
+                    user = User.objects.get(username=username)
+                    users.append({'id': user.id, 'username': username, 'is_online': is_online})
+                except User.DoesNotExist:
+                    continue
 
         logger.info(f"Users fetched: {users}")
         return Response({'users': users})
 
     def post(self, request):
         username = request.data.get('username')
-        if username:
+        password = request.data.get('password')
+        if not username or not password:
+            logger.error("Username or password missing")
+            return Response({'status': 'error', 'message': 'نام کاربری و رمز عبور الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(username=username)
+            if user.check_password(password):
+                request.session['username'] = username
+                request.session['user_id'] = user.id
+                request.session['last_activity'] = datetime.now().isoformat()
+                request.session.modified = True
+                logger.info(f"User {username} logged in")
+                return Response({'status': 'success', 'user_id': user.id})
+            else:
+                logger.error(f"Invalid password for {username}")
+                return Response({'status': 'error', 'message': 'نام کاربری یا رمز عبور اشتباه است'}, status=status.HTTP_401_UNAUTHORIZED)
+        except User.DoesNotExist:
+            user = User(username=username)
+            user.set_password(password)
+            user.save()
             request.session['username'] = username
+            request.session['user_id'] = user.id
             request.session['last_activity'] = datetime.now().isoformat()
             request.session.modified = True
-            logger.info(f"User {username} added to session")
-            return Response({'status': 'success'})
-        logger.error("No username provided in POST request")
-        return Response({'status': 'error', 'message': 'Username required'}, status=status.HTTP_400_BAD_REQUEST)
+            logger.info(f"User {username} registered")
+            return Response({'status': 'success', 'user_id': user.id})
 
 class FileUpload(APIView):
     def post(self, request):
         file = request.FILES['file']
+        if file.size > 20 * 1024 * 1024 * 1024:  # 20 گیگابایت
+            return Response({'status': 'error', 'message': 'حجم فایل باید کمتر از 20 گیگابایت باشد'}, status=status.HTTP_400_BAD_REQUEST)
+        
         fs = FileSystemStorage(location='Uploads/')
         filename = fs.save(file.name, file)
         file_url = fs.url(filename)

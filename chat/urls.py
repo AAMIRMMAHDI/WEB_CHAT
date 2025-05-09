@@ -2,7 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('messages/', views.MessageList.as_view(), name='message-list'),
-    path('users/', views.UserList.as_view(), name='user-list'),
-    path('upload/', views.FileUpload.as_view(), name='file-upload'),
+    path('', views.index, name='index'),
+    path('api/messages/', views.MessageList.as_view(), name='message-list'),
+    path('api/users/', views.UserList.as_view(), name='user-list'),
+    path('api/upload/', views.FileUpload.as_view(), name='file-upload'),
 ]

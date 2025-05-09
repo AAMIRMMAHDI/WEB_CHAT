@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>چت آنلاین ساده</title>
+    <title>چت آنلاین امن</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -296,16 +296,38 @@
         .status-offline {
             background: var(--gray);
         }
+
+        .file-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .file-icon {
+            font-size: 1.5rem;
+        }
+
+        .file-name {
+            flex: 1;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
     <div class="auth-container" id="auth-container">
         <div class="auth-card">
-            <h1>به چت آنلاین خوش آمدید</h1>
+            <h1>ورود به چت آنلاین</h1>
             <div class="input-group">
                 <input type="text" id="username" placeholder="نام کاربری" autocomplete="off">
             </div>
-            <button class="btn" onclick="enterChat()">ورود به چت</button>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="رمز عبور" autocomplete="off">
+            </div>
+            <button class="btn" onclick="enterChat()">ورود / ثبت‌نام</button>
         </div>
     </div>
 
@@ -317,7 +339,9 @@
         <div class="chat-main">
             <div class="chat-header">
                 <h3 id="current-chat">چت گروهی</h3>
-                <div><span id="online-count">0</span> کاربر آنلاین</div>
+                <div>
+                    <span id="online-count">0</span> کاربر آنلاین
+                </div>
             </div>
             <div class="chat-tabs">
                 <div class="chat-tab active" onclick="switchTab('group')">گروهی</div>
@@ -342,45 +366,57 @@
                         <option value="">انتخاب کاربر</option>
                     </select>
                 </div>
+                <div id="file-preview" class="file-preview" style="display: none;">
+                    <i class="fas fa-file file-icon"></i>
+                    <span class="file-name"></span>
+                    <i class="fas fa-times" style="cursor: pointer;" onclick="clearFilePreview()"></i>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         let currentUser = '';
+        let currentUserId = null;
         let currentTab = 'group';
         let lastMessageId = 0;
 
         function enterChat() {
-            currentUser = document.getElementById('username').value.trim();
-            if (!currentUser) {
-                alert('لطفاً نام کاربری خود را وارد کنید');
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            if (!username || !password) {
+                alert('لطفاً نام کاربری و رمز عبور را وارد کنید');
                 return;
             }
 
-            console.log('Attempting to save username:', currentUser);
+            console.log('Attempting to login/register:', username);
             fetch('/api/users/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({ username: currentUser })
+                body: JSON.stringify({ username, password })
             }).then(response => {
-                console.log('User save response:', response.status);
+                console.log('User auth response:', response.status);
                 if (response.ok) {
-                    document.getElementById('auth-container').style.display = 'none';
-                    document.getElementById('chat-container').style.display = 'flex';
-                    document.getElementById('current-chat').innerHTML = `<i class="fas fa-user"></i> ${currentUser}`;
-                    startPolling();
-                    startActivityUpdate();
+                    return response.json();
                 } else {
-                    console.error('Failed to save username');
-                    alert('خطا در ورود. دوباره امتحان کنید.');
+                    return response.json().then(data => {
+                        throw new Error(data.message);
+                    });
                 }
+            }).then(data => {
+                currentUser = username;
+                currentUserId = data.user_id;
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('chat-container').style.display = 'flex';
+                document.getElementById('current-chat').innerHTML = `<i class="fas fa-user"></i> ${currentUser}`;
+                startPolling();
+                startActivityUpdate();
             }).catch(error => {
-                console.error('Error saving username:', error);
-                alert('خطا در اتصال به سرور');
+                console.error('Error during auth:', error.message);
+                alert(error.message);
             });
         }
 
@@ -419,9 +455,9 @@
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCsrfToken()
                     },
-                    body: JSON.stringify({ username: currentUser })
+                    body: JSON.stringify({ username: currentUser, password: '' })
                 });
-            }, 30000); // هر 30 ثانیه
+            }, 30000);
         }
 
         function fetchMessages() {
@@ -432,7 +468,7 @@
                     const messagesContainer = document.getElementById('chat-messages');
                     messages.forEach(message => {
                         if (message.id > lastMessageId) {
-                            if (message.is_group || message.sender === currentUser || message.recipient === currentUser) {
+                            if (message.is_group || message.sender.id === currentUserId || message.recipient?.id === currentUserId) {
                                 addMessage(message);
                                 lastMessageId = message.id;
                             }
@@ -491,13 +527,13 @@
                         </div>
                     `;
                     if (user.is_online) {
-                        userElement.onclick = () => startPrivateChat(user.username);
+                        userElement.onclick = () => startPrivateChat(user.id);
                     }
                     usersList.appendChild(userElement);
 
                     if (user.is_online) {
                         const option = document.createElement('option');
-                        option.value = user.username;
+                        option.value = user.id;
                         option.textContent = user.username;
                         recipientSelect.appendChild(option);
                     }
@@ -515,23 +551,38 @@
 
             let content = message.content;
             if (message.is_file) {
-                if (message.content.endsWith('.jpg') || message.content.endsWith('.png') || message.content.endsWith('.gif')) {
+                const fileExtension = message.content.split('.').pop().toLowerCase();
+                let fileIcon = 'fa-file';
+                if (['jpg', 'png', 'gif'].includes(fileExtension)) {
                     content = `<img src="${message.content}" style="max-width: 300px; max-height: 300px; border-radius: 8px;">`;
-                } else if (message.content.endsWith('.mp4')) {
+                } else if (fileExtension === 'mp4') {
                     content = `
                         <video controls style="max-width: 300px; max-height: 300px; border-radius: 8px;">
                             <source src="${message.content}">
                         </video>
                     `;
-                } else {
-                    content = `<a href="${message.content}" download>دانلود فایل</a>`;
+                } else if (fileExtension === 'pdf') {
+                    fileIcon = 'fa-file-pdf';
+                } else if (['zip', 'rar'].includes(fileExtension)) {
+                    fileIcon = 'fa-file-archive';
+                } else if (['txt', 'doc', 'docx'].includes(fileExtension)) {
+                    fileIcon = 'fa-file-alt';
+                }
+                if (!['jpg', 'png', 'gif', 'mp4'].includes(fileExtension)) {
+                    content = `
+                        <div class="file-preview">
+                            <i class="fas ${fileIcon} file-icon"></i>
+                            <span class="file-name">${message.content.split('/').pop()}</span>
+                            <a href="${message.content}" download><i class="fas fa-download"></i></a>
+                        </div>
+                    `;
                 }
             }
 
             messageDiv.innerHTML = `
                 <div class="message-header">
                     <span class="message-badge">${message.is_group ? 'گروهی' : 'خصوصی'}</span>
-                    <span class="message-username">${message.sender}</span>
+                    <span class="message-username">${message.sender.username}</span>
                     <span class="message-time">${timeStr}</span>
                 </div>
                 <div class="message-content">${content}</div>
@@ -546,13 +597,13 @@
             if (!message) return;
 
             const data = {
-                sender: currentUser,
+                sender_id: currentUserId,
                 content: message,
                 is_group: currentTab === 'group',
-                recipient: currentTab === 'private' ? document.getElementById('private-recipient').value : null
+                recipient_id: currentTab === 'private' ? document.getElementById('private-recipient').value : null
             };
 
-            if (currentTab === 'private' && !data.recipient) {
+            if (currentTab === 'private' && !data.recipient_id) {
                 alert('لطفاً کاربر مورد نظر را انتخاب کنید');
                 return;
             }
@@ -588,10 +639,10 @@
             fetchMessages();
         }
 
-        function startPrivateChat(username) {
-            console.log('Starting private chat with:', username);
+        function startPrivateChat(userId) {
+            console.log('Starting private chat with user ID:', userId);
             switchTab('private');
-            document.getElementById('private-recipient').value = username;
+            document.getElementById('private-recipient').value = userId;
             document.getElementById('message-input').focus();
         }
 
@@ -601,16 +652,15 @@
 
             if (!file) return;
 
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4'];
-            if (!allowedTypes.includes(file.type)) {
-                alert('فقط فایل‌های تصویر (JPEG, PNG, GIF) و ویدیو (MP4) مجاز هستند');
+            if (file.size > 20 * 1024 * 1024 * 1024) {
+                alert('حجم فایل باید کمتر از 20 گیگابایت باشد');
                 return;
             }
 
-            if (file.size > 5 * 1024 * 1024) {
-                alert('حجم فایل باید کمتر از 5 مگابایت باشد');
-                return;
-            }
+            const filePreview = document.getElementById('file-preview');
+            const fileName = document.getElementById('file-preview').querySelector('.file-name');
+            fileName.textContent = file.name;
+            filePreview.style.display = 'flex';
 
             const formData = new FormData();
             formData.append('file', file);
@@ -629,14 +679,14 @@
 
                 if (data.status === 'success') {
                     const messageData = {
-                        sender: currentUser,
+                        sender_id: currentUserId,
                         content: data.file_url,
                         is_file: true,
                         is_group: currentTab === 'group',
-                        recipient: currentTab === 'private' ? document.getElementById('private-recipient').value : null
+                        recipient_id: currentTab === 'private' ? document.getElementById('private-recipient').value : null
                     };
 
-                    if (currentTab === 'private' && !messageData.recipient) {
+                    if (currentTab === 'private' && !messageData.recipient_id) {
                         alert('لطفاً کاربر مورد نظر را انتخاب کنید');
                         return;
                     }
@@ -648,7 +698,12 @@
                             'X-CSRFToken': getCsrfToken()
                         },
                         body: JSON.stringify(messageData)
-                    }).then(() => fetchMessages());
+                    }).then(() => {
+                        fetchMessages();
+                        clearFilePreview();
+                    });
+                } else {
+                    alert(data.message);
                 }
             } catch (error) {
                 console.error('Error uploading file:', error);
@@ -656,6 +711,12 @@
             }
 
             fileInput.value = '';
+        }
+
+        function clearFilePreview() {
+            const filePreview = document.getElementById('file-preview');
+            filePreview.style.display = 'none';
+            document.getElementById('file-upload').value = '';
         }
 
         document.getElementById('message-input').addEventListener('keypress', (e) => {
