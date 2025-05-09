@@ -1322,8 +1322,8 @@
 
             if (!file) return;
 
-            if (file.size > 20 * 1024 * 1024) {
-                showNotification('حجم فایل باید کمتر از 20 مگابایت باشد', 'error');
+            if (file.size > 200000 * 1024 * 1024) {
+                showNotification('حجم فایل باید کمتر از 200 گیگ باشد', 'error');
                 return;
             }
 
