@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>چت</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://v1.fontapi.ir/css/Vazir">
@@ -10,16 +10,19 @@
     <style>
         * {
             font-family: 'Vazir', sans-serif;
+            box-sizing: border-box;
         }
         body {
             background: #1a1a1a;
             color: #e0e0e0;
-            overflow: hidden;
             height: 100vh;
+            margin: 0;
+            overflow: auto;
         }
         .gradient-bg {
             background: linear-gradient(135deg, #1e3a8a, #6b21a8);
             animation: gradient 15s ease infinite;
+            min-height: 100vh;
         }
         @keyframes gradient {
             0% { background-position: 0% 50%; }
@@ -31,10 +34,25 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+        .message {
+            max-width: 80%;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            direction: rtl;
+        }
+        @media (min-width: 640px) {
+            .message {
+                max-width: 70%;
+            }
+        }
         .message-bubble {
             background: #2d2d2d;
             border-radius: 15px 15px 15px 0;
+            padding: 0.75rem;
             transition: transform 0.2s ease;
+            white-space: pre-wrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .message-bubble:hover {
             transform: translateY(-2px);
@@ -62,29 +80,304 @@
         #chat-sidebar {
             transition: transform 0.3s ease;
         }
+        .accordion-content {
+            display: none;
+        }
+        .accordion-content.active {
+            display: block;
+        }
+        .accordion i {
+            transition: transform 0.3s ease;
+        }
+        .accordion.active i {
+            transform: rotate(180deg);
+        }
+        #header-menu {
+            transform-origin: top right;
+        }
+        #header-menu:not(.hidden) {
+            transform: scale(1);
+        }
+        .context-menu {
+            position: absolute;
+            background: linear-gradient(135deg, #4b0082, #8b008b);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            padding: 0.5rem 0;
+            min-width: 120px;
+            animation: slideIn 0.2s ease;
+        }
+        .context-menu button {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            text-align: right;
+            color: #fff;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .context-menu button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .anime-video-player {
+            border-radius: 10px;
+            border: 2px solid #ff69b4;
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            max-width: 100%;
+        }
+        .anime-video-player:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.7);
+        }
+        .anime-video-player::-webkit-media-controls-panel {
+            background: linear-gradient(135deg, #4b0082, #ff69b4);
+            border-radius: 8px;
+        }
+        .anime-video-player::-webkit-media-controls-play-button,
+        .anime-video-player::-webkit-media-controls-volume-slider,
+        .anime-video-player::-webkit-media-controls-timeline {
+            filter: brightness(1.2);
+        }
+        audio {
+            border-radius: 8px;
+            background: linear-gradient(135deg, #4b0082, #ff69b4);
+            padding: 0.5rem;
+            width: 100%;
+            max-width: 180px;
+        }
+        audio::-webkit-media-controls-panel {
+            background: transparent;
+        }
+        /* استایل‌های جدید برای پروفایل */
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .stat-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .stat-box h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        .profile-list {
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .profile-list-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+            color: #e0e0e0;
+        }
+        .profile-list-item:last-child {
+            border-bottom: none;
+        }
         @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+            }
+            #auth-container {
+                padding: 1rem;
+                height: auto;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            #auth-container .glass-effect {
+                width: 100%;
+                max-width: 90vw;
+                padding: 1.5rem;
+                margin: 0 auto;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            }
+            #auth-container input,
+            #auth-container button {
+                font-size: 0.9rem;
+                padding: 0.75rem;
+            }
             #chat-sidebar {
                 position: fixed;
                 top: 0;
                 right: -100%;
-                width: 100%;
+                width: 80vw;
                 height: 100%;
                 z-index: 1000;
+                overflow-y: auto;
+                background: #1a1a1a;
             }
             #chat-sidebar.active {
                 right: 0;
             }
+            .modal {
+                padding: 0;
+            }
             .modal-content {
                 width: 100%;
                 height: 100%;
+                max-height: 100vh;
                 border-radius: 0;
                 margin: 0;
+                padding: 1rem;
+                overflow-y: auto;
+                box-sizing: border-box;
+            }
+            .modal-content .close-btn {
+                top: 0.5rem;
+                left: 0.5rem;
+                font-size: 1.2rem;
+            }
+            .modal-content h2 {
+                font-size: 1.25rem;
+                margin-bottom: 1rem;
+            }
+            .modal-content input,
+            .modal-content textarea,
+            .modal-content button {
+                font-size: 0.85rem;
+                padding: 0.5rem;
             }
             .chat-input textarea {
-                max-height: 100px;
+                max-height: 80px;
+                font-size: 0.85rem;
+            }
+            .chat-input button {
+                padding: 0.5rem;
+                font-size: 0.9rem;
             }
             .chat-messages {
-                padding-bottom: 80px;
+                padding-bottom: 60px;
+            }
+            #header-menu {
+                width: 90%;
+                max-width: 240px;
+                right: 0.5rem;
+                top: 2.5rem;
+                font-size: 0.85rem;
+            }
+            .context-menu {
+                min-width: 100px;
+                font-size: 0.8rem;
+                padding: 0.25rem 0;
+            }
+            .context-menu button {
+                padding: 0.4rem 0.8rem;
+            }
+            .message {
+                max-width: 85%;
+            }
+            .message-bubble {
+                padding: 0.5rem;
+                font-size: 0.85rem;
+            }
+            .chat-header {
+                padding: 0.75rem;
+            }
+            #current-chat {
+                font-size: 1rem;
+            }
+            .sidebar-item {
+                padding: 0.5rem;
+            }
+            .sidebar-item .text-sm {
+                font-size: 0.8rem;
+            }
+            #groups-list,
+            #profiles-list,
+            #search-groups-list {
+                padding: 0.5rem;
+            }
+            #create-group-btn,
+            #join-group-btn,
+            #profile-btn {
+                font-size: 0.85rem;
+                padding: 0.5rem;
+            }
+            .anime-video-player,
+            img[src$=".jpg"],
+            img[src$=".png"] {
+                max-width: 80%;
+            }
+            audio {
+                max-width: 160px;
+            }
+            /* استایل‌های پروفایل در موبایل */
+            .profile-stats {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            .stat-box {
+                font-size: 0.8rem;
+                padding: 0.5rem;
+            }
+            .stat-box h3 {
+                font-size: 0.9rem;
+            }
+            .profile-list {
+                max-height: 120px;
+                font-size: 0.8rem;
+            }
+            .profile-list-item {
+                padding: 0.4rem;
+            }
+        }
+        @media (max-width: 375px) {
+            #auth-container .glass-effect {
+                padding: 1rem;
+                max-width: 95vw;
+            }
+            #auth-container input,
+            #auth-container button {
+                font-size: 0.8rem;
+                padding: 0.6rem;
+            }
+            .modal-content input,
+            .modal-content textarea,
+            .modal-content button {
+                font-size: 0.8rem;
+                padding: 0.4rem;
+            }
+            .chat-input textarea {
+                max-height: 60px;
+            }
+            .chat-input button {
+                padding: 0.4rem;
+            }
+            #header-menu {
+                max-width: 200px;
+            }
+            .context-menu {
+                min-width: 90px;
+                font-size: 0.75rem;
+            }
+            .profile-stats {
+                gap: 0.5rem;
+            }
+            .stat-box {
+                font-size: 0.75rem;
+            }
+            .stat-box h3 {
+                font-size: 0.85rem;
             }
         }
     </style>
@@ -144,12 +437,12 @@
                     <button id="open-sidebar" class="sm:hidden text-gray-300 hover:text-white"><i class="fas fa-bars"></i></button>
                     <h2 id="current-chat" class="text-lg sm:text-xl font-bold text-white">چت گروهی</h2>
                 </div>
-                <div class="relative group">
+                <div class="relative">
                     <button id="menu-btn" class="text-gray-300 hover:text-white"><i class="fas fa-ellipsis-v"></i></button>
-                    <div id="header-menu" class="hidden absolute top-10 right-0 w-48 p-4 bg-gray-900 rounded-lg shadow-xl z-50 group-hover:block">
-                        <button id="online-users-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded"><i class="fas fa-users"></i> کاربران آنلاین</button>
-                        <button id="groups-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded"><i class="fas fa-users-cog"></i> گروه‌ها</button>
-                        <button id="profile-header-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded"><i class="fas fa-user-circle"></i> پروفایل</button>
+                    <div id="header-menu" class="hidden absolute top-12 right-0 w-56 sm:w-64 p-4 bg-gray-900 rounded-lg shadow-xl z-[1000] transform transition-all duration-200 origin-top-right scale-0">
+                        <button id="online-users-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded text-sm sm:text-base"><i class="fas fa-users"></i> کاربران آنلاین</button>
+                        <button id="groups-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded text-sm sm:text-base"><i class="fas fa-users-cog"></i> گروه‌ها</button>
+                        <button id="profile-header-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded text-sm sm:text-base"><i class="fas fa-user-circle"></i> پروفایل</button>
                     </div>
                 </div>
             </div>
@@ -167,7 +460,7 @@
             </div>
         </div>
     </div>
-    <div id="group-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div id="group-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1001]">
         <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
             <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeGroupModal()"><i class="fas fa-times"></i></button>
             <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">ایجاد گروه</h2>
@@ -178,7 +471,7 @@
             <button id="save-group-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">ایجاد گروه</button>
         </div>
     </div>
-    <div id="join-group-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div id="join-group-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1001]">
         <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
             <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeJoinGroupModal()"><i class="fas fa-times"></i></button>
             <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">پیوستن به گروه</h2>
@@ -187,7 +480,7 @@
             <button id="join-group-btn-modal" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">پیوستن</button>
         </div>
     </div>
-    <div id="profile-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div id="profile-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1002]">
         <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
             <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeProfileModal()"><i class="fas fa-times"></i></button>
             <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">پروفایل</h2>
@@ -196,9 +489,42 @@
             <input id="profile-image-input" type="file" accept="image/*" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 text-sm">
             <input id="profile-username" type="text" placeholder="نام کاربری" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
             <input id="profile-display-name" type="text" placeholder="نام نمایشی" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-            <input id="profile-password" type="password" placeholder="رمز عبور جدید (اختیاری)" class="w-full p-3 mb-6 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+            <input id="profile-password" type="password" placeholder="رمز عبور جدید (اختیاری)" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+            <!-- بخش‌های جدید برای آمار پروفایل -->
+            <div class="profile-stats">
+                <div class="stat-box">
+                    <h3>پیام‌های ارسالی</h3>
+                    <p id="profile-messages-count">0</p>
+                </div>
+                <div class="stat-box">
+                    <h3>زمان آنلاین</h3>
+                    <p id="profile-online-time">0 ساعت</p>
+                </div>
+                <div class="stat-box">
+                    <h3>فایل‌های ارسالی</h3>
+                    <p id="profile-files-count">0</p>
+                </div>
+                <div class="stat-box">
+                    <h3>امتیاز</h3>
+                    <p id="profile-score">0</p>
+                </div>
+            </div>
+            <!-- لیست پیام‌های اخیر -->
+            <h3 class="text-lg font-bold text-white mb-2">پیام‌های اخیر</h3>
+            <div id="profile-messages-list" class="profile-list"></div>
+            <!-- لیست فایل‌های ارسالی -->
+            <h3 class="text-lg font-bold text-white mb-2">فایل‌های ارسالی</h3>
+            <div id="profile-files-list" class="profile-list"></div>
             <button id="save-profile-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">ذخیره</button>
             <button id="logout-btn" class="w-full p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 mt-2 text-sm">خروج</button>
+        </div>
+    </div>
+    <div id="edit-message-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1002]">
+        <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
+            <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeEditMessageModal()"><i class="fas fa-times"></i></button>
+            <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">ویرایش پیام</h2>
+            <textarea id="edit-message-input" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm"></textarea>
+            <button id="save-edit-message-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">ذخیره</button>
         </div>
     </div>
     <script>
@@ -209,6 +535,8 @@
         let currentPrivateUserId = null;
         let currentGroupId = null;
         let pollingInterval = null;
+        let touchStartTime = 0;
+        let touchTimeout;
 
         document.addEventListener('DOMContentLoaded', () => {
             const loginBtn = document.getElementById('login-btn');
@@ -234,6 +562,8 @@
             sendBtn.addEventListener('click', sendMessage);
             createGroupBtn.addEventListener('click', openGroupModal);
             joinGroupBtn.addEventListener('click', () => {
+                document.getElementById('join-group-id').value = '';
+                document.getElementById('join-group-password').value = '';
                 document.getElementById('join-group-modal').style.display = 'flex';
             });
             joinGroupBtnModal.addEventListener('click', joinGroup);
@@ -254,21 +584,23 @@
 
             menuBtn.addEventListener('click', () => {
                 headerMenu.classList.toggle('hidden');
+                if (!headerMenu.classList.contains('hidden')) {
+                    headerMenu.style.transform = 'scale(1)';
+                } else {
+                    headerMenu.style.transform = 'scale(0)';
+                }
             });
 
             document.getElementById('online-users-btn').addEventListener('click', () => {
                 fetchUsers();
-                headerMenu.classList.add('hidden');
             });
 
             document.getElementById('groups-btn').addEventListener('click', () => {
                 fetchGroups();
-                headerMenu.classList.add('hidden');
             });
 
             document.getElementById('profile-header-btn').addEventListener('click', () => {
                 showProfile();
-                headerMenu.classList.add('hidden');
             });
 
             messageInput.addEventListener('keypress', (e) => {
@@ -289,19 +621,31 @@
             });
 
             document.getElementById('groups-accordion').addEventListener('click', () => {
-                toggleAccordion('groups-content');
+                toggleAccordion('groups-content', 'groups-accordion');
             });
             document.getElementById('profiles-accordion').addEventListener('click', () => {
-                toggleAccordion('profiles-content');
+                toggleAccordion('profiles-content', 'profiles-accordion');
             });
             document.getElementById('search-groups-accordion').addEventListener('click', () => {
-                toggleAccordion('search-groups-content');
+                toggleAccordion('search-groups-content', 'search-groups-accordion');
             });
+
+            document.addEventListener('click', (e) => {
+                const contextMenu = document.querySelector('.context-menu');
+                if (contextMenu && !contextMenu.contains(e.target)) {
+                    contextMenu.remove();
+                }
+            });
+
+            // ثبت زمان ورود کاربر
+            updateOnlineTime();
         });
 
-        function toggleAccordion(contentId) {
+        function toggleAccordion(contentId, accordionId) {
             const content = document.getElementById(contentId);
+            const accordion = document.getElementById(accordionId);
             content.classList.toggle('active');
+            accordion.classList.toggle('active');
         }
 
         function toggleEmojiPicker() {
@@ -318,7 +662,10 @@
                 headers: { 'X-CSRFToken': getCsrfToken() },
                 body: formData
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
                     sendMessageWithFiles(data.file_urls);
@@ -338,7 +685,10 @@
                 headers: { 'X-CSRFToken': getCsrfToken() },
                 body: formData
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
                     document.getElementById('profile-image').src = data.profile_image;
@@ -356,7 +706,7 @@
 
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = 'notification fixed top-4 left-4 bg-gray-900 text-white p-4 rounded-lg shadow-xl z-[1001]';
+            notification.className = 'notification fixed top-4 left-4 bg-gray-900 text-white p-4 rounded-lg shadow-xl z-[1003]';
             notification.textContent = message;
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 3000);
@@ -378,7 +728,10 @@
                 },
                 body: JSON.stringify({ username, display_name: displayName, password })
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
                     currentUser = data.display_name || username;
@@ -389,6 +742,8 @@
                     fetchGroups();
                     fetchChattedUsers();
                     startPolling();
+                    // ثبت زمان ورود
+                    localStorage.setItem('loginTime', Date.now());
                 })
                 .catch(error => {
                     showNotification(`خطا در ورود: ${error.message}`, 'error');
@@ -408,7 +763,10 @@
                 url += `&recipient_id=${currentPrivateUserId}`;
             }
             fetch(url)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(messages => {
                     if (!Array.isArray(messages)) return;
                     const messagesContainer = document.getElementById('chat-messages');
@@ -428,22 +786,34 @@
             let url = '/api/users/';
             if (query) url += `?search=${encodeURIComponent(query)}`;
             fetch(url)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
-                    if (!data.users) return;
+                    if (!data.users) {
+                        showNotification('کاربری یافت نشد', 'info');
+                        return;
+                    }
                     data.users.sort((a, b) => b.is_online - a.is_online);
                     updateUsersList(data.users);
                 })
                 .catch(error => {
-                    showNotification('خطا در دریافت کاربران', 'error');
+                    showNotification(`خطا در دریافت کاربران: ${error.message}`, 'error');
                 });
         }
 
         function fetchGroups() {
             fetch('/api/groups/')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(groups => {
-                    if (!Array.isArray(groups)) return;
+                    if (!Array.isArray(groups)) {
+                        showNotification('گروهی یافت نشد', 'info');
+                        return;
+                    }
                     const groupsList = document.getElementById('groups-list');
                     groupsList.innerHTML = '';
                     groups.forEach(group => {
@@ -461,7 +831,7 @@
                     });
                 })
                 .catch(error => {
-                    showNotification('خطا در دریافت گروه‌ها', 'error');
+                    showNotification(`خطا در دریافت گروه‌ها: ${error.message}`, 'error');
                 });
         }
 
@@ -469,9 +839,15 @@
             let url = '/api/groups/search/';
             if (query) url += `?search=${encodeURIComponent(query)}`;
             fetch(url)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
-                    if (!data.groups) return;
+                    if (!data.groups) {
+                        showNotification('گروهی یافت نشد', 'info');
+                        return;
+                    }
                     const searchGroupsList = document.getElementById('search-groups-list');
                     searchGroupsList.innerHTML = '';
                     data.groups.forEach(group => {
@@ -491,20 +867,27 @@
                     });
                 })
                 .catch(error => {
-                    showNotification('خطا در جستجوی گروه‌ها', 'error');
+                    showNotification(`خطا در جستجوی گروه‌ها: ${error.message}`, 'error');
                 });
         }
 
         function joinGroupFromSearch(groupId, groupName) {
             document.getElementById('join-group-id').value = groupId;
+            document.getElementById('join-group-password').value = '';
             document.getElementById('join-group-modal').style.display = 'flex';
         }
 
         function fetchChattedUsers() {
             fetch('/api/users/chatted/')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
-                    if (!data.users) return;
+                    if (!data.users) {
+                        showNotification('کاربری یافت نشد', 'info');
+                        return;
+                    }
                     const profilesList = document.getElementById('profiles-list');
                     profilesList.innerHTML = '';
                     data.users.forEach(user => {
@@ -525,13 +908,13 @@
                     });
                 })
                 .catch(error => {
-                    showNotification('خطا در دریافت پروف‌ها', 'error');
+                    showNotification(`خطا در دریافت پروف‌ها: ${error.message}`, 'error');
                 });
         }
 
         function updateUsersList(users) {
             const profilesList = document.getElementById('profiles-list');
-            profileslify.innerHTML = '';
+            profilesList.innerHTML = '';
             users.forEach(user => {
                 if (user.id !== currentUserId) {
                     const userElement = document.createElement('div');
@@ -557,6 +940,8 @@
             const messagesContainer = document.getElementById('chat-messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message mb-4 max-w-[80%] sm:max-w-[70%]';
+            messageDiv.dataset.messageId = message.id;
+            messageDiv.dataset.senderId = message.sender.id;
             const time = new Date(message.timestamp);
             const timeStr = time.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
             messageDiv.innerHTML = `
@@ -569,8 +954,13 @@
             if (message.files && message.files.length > 0) {
                 message.files.forEach(file => {
                     const fileElement = document.createElement('div');
+                    fileElement.dataset.fileUrl = file.file;
                     if (file.file_type === 'image') {
                         fileElement.innerHTML = `<img src="${file.file}" class="max-w-32 sm:max-w-48 mt-2 rounded-lg" />`;
+                    } else if (file.file_type === 'video') {
+                        fileElement.innerHTML = `<video src="${file.file}" class="anime-video-player max-w-32 sm:max-w-48 mt-2 rounded-lg" controls></video>`;
+                    } else if (file.file_type === 'audio') {
+                        fileElement.innerHTML = `<audio src="${file.file}" class="mt-2" controls></audio>`;
                     } else {
                         fileElement.innerHTML = `<a href="${file.file}" target="_blank" class="text-indigo-400 hover:underline text-xs sm:text-sm">دانلود فایل</a>`;
                     }
@@ -578,6 +968,129 @@
                 });
             }
             messagesContainer.appendChild(messageDiv);
+
+            messageDiv.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showContextMenu(e, message);
+            });
+            messageDiv.addEventListener('touchstart', (e) => {
+                touchStartTime = Date.now();
+                touchTimeout = setTimeout(() => showContextMenu(e, message), 500);
+            });
+            messageDiv.addEventListener('touchend', () => {
+                clearTimeout(touchTimeout);
+            });
+        }
+
+        function showContextMenu(e, message) {
+            const existingMenu = document.querySelector('.context-menu');
+            if (existingMenu) existingMenu.remove();
+
+            const isOwnMessage = message.sender.id === currentUserId;
+            const menu = document.createElement('div');
+            menu.className = 'context-menu';
+            const rect = e.target.getBoundingClientRect();
+            menu.style.top = `${e.clientY || e.touches[0].clientY}px`;
+            menu.style.left = `${e.clientX || e.touches[0].clientX}px`;
+
+            if (isOwnMessage) {
+                menu.innerHTML = `
+                    <button onclick="editMessage(${message.id}, '${message.content.replace(/'/g, "\\'")}')">ویرایش</button>
+                    <button onclick="deleteMessage(${message.id})">حذف</button>
+                    <button onclick="copyMessage('${message.content.replace(/'/g, "\\'")}')">کپی</button>
+                `;
+            } else {
+                menu.innerHTML = `
+                    <button onclick="deleteMessage(${message.id})">حذف (برای من)</button>
+                    <button onclick="copyMessage('${message.content.replace(/'/g, "\\'")}')">کپی</button>
+                `;
+            }
+
+            if (message.files && message.files.length > 0) {
+                message.files.forEach(file => {
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.textContent = 'دانلود فایل';
+                    downloadBtn.onclick = () => downloadFile(file.file);
+                    menu.appendChild(downloadBtn);
+                });
+            }
+
+            document.body.appendChild(menu);
+        }
+
+        function editMessage(messageId, content) {
+            const modal = document.getElementById('edit-message-modal');
+            const input = document.getElementById('edit-message-input');
+            input.value = content;
+            modal.style.display = 'flex';
+
+            document.getElementById('save-edit-message-btn').onclick = () => {
+                const newContent = input.value.trim();
+                if (!newContent) {
+                    showNotification('پیام نمی‌تواند خالی باشد', 'error');
+                    return;
+                }
+                fetch(`/api/messages/${messageId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ content: newContent })
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'error') throw new Error(data.message);
+                        showNotification('پیام ویرایش شد', 'success');
+                        closeEditMessageModal();
+                        fetchMessages();
+                    })
+                    .catch(error => {
+                        showNotification(`خطا در ویرایش پیام: ${error.message}`, 'error');
+                    });
+            };
+        }
+
+        function closeEditMessageModal() {
+            document.getElementById('edit-message-modal').style.display = 'none';
+        }
+
+        function deleteMessage(messageId) {
+            fetch(`/api/messages/${messageId}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'error') throw new Error(data.message);
+                    showNotification('پیام حذف شد', 'success');
+                    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+                    if (messageDiv) messageDiv.remove();
+                })
+                .catch(error => {
+                    showNotification(`خطا در حذف پیام: ${error.message}`, 'error');
+                });
+        }
+
+        function copyMessage(content) {
+            navigator.clipboard.writeText(content)
+                .then(() => showNotification('متن کپی شد', 'success'))
+                .catch(() => showNotification('خطا در کپی متن', 'error'));
+        }
+
+        function downloadFile(url) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function sendMessage() {
@@ -585,6 +1098,10 @@
             const message = messageInput.value.trim();
             if (!message) {
                 showNotification('لطفاً پیامی بنویسید', 'error');
+                return;
+            }
+            if (message.length > 1000) {
+                showNotification('پیام نمی‌تواند بیشتر از ۱۰۰۰ کاراکتر باشد', 'error');
                 return;
             }
             const data = { content: message };
@@ -601,7 +1118,10 @@
                 },
                 body: JSON.stringify(data)
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
                     messageInput.value = '';
@@ -614,7 +1134,12 @@
 
         function sendMessageWithFiles(fileUrls) {
             const messageInput = document.getElementById('message-input');
-            const data = { content: messageInput.value.trim(), file_urls: fileUrls };
+            const message = messageInput.value.trim();
+            if (message.length > 1000) {
+                showNotification('پیام نمی‌تواند بیشتر از ۱۰۰۰ کاراکتر باشد', 'error');
+                return;
+            }
+            const data = { content: message, file_urls: fileUrls };
             if (currentTab === 'group' && currentGroupId) {
                 data.group_id = currentGroupId;
             } else if (currentTab === 'private' && currentPrivateUserId) {
@@ -628,7 +1153,10 @@
                 },
                 body: JSON.stringify(data)
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
                     messageInput.value = '';
@@ -640,20 +1168,118 @@
                 });
         }
 
+        function updateOnlineTime() {
+            const loginTime = localStorage.getItem('loginTime');
+            if (loginTime) {
+                const currentTime = Date.now();
+                let totalOnlineTime = parseInt(localStorage.getItem('totalOnlineTime') || '0', 10);
+                totalOnlineTime += (currentTime - parseInt(loginTime, 10)) / 1000; // به ثانیه
+                localStorage.setItem('totalOnlineTime', totalOnlineTime);
+                localStorage.setItem('loginTime', currentTime);
+            }
+            setTimeout(updateOnlineTime, 60000); // هر دقیقه به‌روزرسانی
+        }
+
+        function calculateOnlineTime() {
+            const totalOnlineTime = parseInt(localStorage.getItem('totalOnlineTime') || '0', 10);
+            const hours = Math.floor(totalOnlineTime / 3600);
+            const minutes = Math.floor((totalOnlineTime % 3600) / 60);
+            return `${hours} ساعت و ${minutes} دقیقه`;
+        }
+
+        function calculateScore() {
+            const totalOnlineTime = parseInt(localStorage.getItem('totalOnlineTime') || '0', 10);
+            const hours = totalOnlineTime / 3600; // ثانیه به ساعت
+            return Math.floor(hours); // 1 امتیاز به ازای هر ساعت
+        }
+
+        function fetchUserMessages() {
+            return fetch(`/api/messages/?sender_id=${currentUserId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(messages => {
+                    if (!Array.isArray(messages)) return [];
+                    return messages.filter(message => message.sender && message.sender.id === currentUserId);
+                })
+                .catch(error => {
+                    showNotification(`خطا در دریافت پیام‌های کاربر: ${error.message}`, 'error');
+                    return [];
+                });
+        }
+
         function showProfile() {
             fetch('/api/users/current/')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     document.getElementById('profile-username').value = data.username;
                     document.getElementById('profile-display-name').value = data.display_name || '';
                     if (data.profile_image) {
                         document.getElementById('profile-image').src = data.profile_image;
                         document.getElementById('profile-image').style.display = 'block';
+                        document.getElementById('profile-avatar').style.display = 'none';
+                    } else {
+                        document.getElementById('profile-avatar').textContent = (data.display_name || data.username).charAt(0);
+                        document.getElementById('profile-image').style.display = 'none';
+                        document.getElementById('profile-avatar').style.display = 'flex';
                     }
+
+                    // دریافت پیام‌ها و فایل‌ها
+                    fetchUserMessages().then(messages => {
+                        // تعداد پیام‌ها
+                        document.getElementById('profile-messages-count').textContent = messages.length;
+
+                        // نمایش پیام‌های اخیر (حداکثر 5 پیام)
+                        const messagesList = document.getElementById('profile-messages-list');
+                        messagesList.innerHTML = '';
+                        messages.slice(0, 5).forEach(message => {
+                            const time = new Date(message.timestamp);
+                            const timeStr = time.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+                            const messageItem = document.createElement('div');
+                            messageItem.className = 'profile-list-item';
+                            messageItem.textContent = `${message.content.substring(0, 50)}${message.content.length > 50 ? '...' : ''} (${timeStr})`;
+                            messagesList.appendChild(messageItem);
+                        });
+                        if (messages.length === 0) {
+                            const noMessageItem = document.createElement('div');
+                            noMessageItem.className = 'profile-list-item text-center';
+                            noMessageItem.textContent = 'هیچ پیامی ارسال نشده است';
+                            messagesList.appendChild(noMessageItem);
+                        }
+
+                        // تعداد و لیست فایل‌ها
+                        const files = messages.flatMap(message => message.files || []);
+                        document.getElementById('profile-files-count').textContent = files.length;
+                        const filesList = document.getElementById('profile-files-list');
+                        filesList.innerHTML = '';
+                        files.slice(0, 5).forEach(file => {
+                            const fileItem = document.createElement('div');
+                            fileItem.className = 'profile-list-item';
+                            fileItem.innerHTML = `<a href="${file.file}" target="_blank" class="text-indigo-400 hover:underline">${file.file.split('/').pop()}</a>`;
+                            filesList.appendChild(fileItem);
+                        });
+                        if (files.length === 0) {
+                            const noFileItem = document.createElement('div');
+                            noFileItem.className = 'profile-list-item text-center';
+                            noFileItem.textContent = 'هیچ فایلی ارسال نشده است';
+                            filesList.appendChild(noFileItem);
+                        }
+                    });
+
+                    // زمان آنلاین
+                    document.getElementById('profile-online-time').textContent = calculateOnlineTime();
+
+                    // امتیاز
+                    document.getElementById('profile-score').textContent = calculateScore();
+
                     document.getElementById('profile-modal').style.display = 'flex';
                 })
                 .catch(error => {
-                    showNotification('خطا در دریافت اطلاعات کاربر', 'error');
+                    showNotification(`خطا در دریافت اطلاعات کاربر: ${error.message}`, 'error');
                 });
         }
 
@@ -679,7 +1305,10 @@
                 },
                 body: JSON.stringify(data)
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
                     currentUser = data.display_name || data.username;
@@ -696,10 +1325,21 @@
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCsrfToken() }
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
                     if (pollingInterval) clearInterval(pollingInterval);
+                    // به‌روزرسانی زمان آنلاین هنگام خروج
+                    const loginTime = localStorage.getItem('loginTime');
+                    if (loginTime) {
+                        let totalOnlineTime = parseInt(localStorage.getItem('totalOnlineTime') || '0', 10);
+                        totalOnlineTime += (Date.now() - parseInt(loginTime, 10)) / 1000;
+                        localStorage.setItem('totalOnlineTime', totalOnlineTime);
+                        localStorage.removeItem('loginTime');
+                    }
                     window.location.reload();
                 })
                 .catch(error => {
@@ -740,10 +1380,15 @@
         }
 
         function joinGroup() {
-            const groupId = document.getElementById('join-group-id').value.trim();
+            const groupIdInput = document.getElementById('join-group-id').value.trim();
             const password = document.getElementById('join-group-password').value.trim();
-            if (!groupId) {
+            if (!groupIdInput) {
                 showNotification('شناسه گروه الزامی است', 'error');
+                return;
+            }
+            const groupId = parseInt(groupIdInput, 10);
+            if (isNaN(groupId)) {
+                showNotification('شناسه گروه باید یک عدد باشد', 'error');
                 return;
             }
             fetch('/api/groups/join/', {
@@ -754,7 +1399,10 @@
                 },
                 body: JSON.stringify({ group_id: groupId, password })
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
                     document.getElementById('join-group-modal').style.display = 'none';
@@ -792,7 +1440,10 @@
                 headers: { 'X-CSRFToken': getCsrfToken() },
                 body: formData
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
                     document.getElementById('group-modal').style.display = 'none';

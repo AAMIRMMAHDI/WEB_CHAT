@@ -37,7 +37,21 @@ class MessageSerializer(serializers.ModelSerializer):
         queryset=Group.objects.all(), source='group', write_only=True, required=False, allow_null=True
     )
     files = FileSerializer(many=True, read_only=True)
+    file_urls = serializers.ListField(
+        child=serializers.DictField(), write_only=True, required=False
+    )
 
     class Meta:
         model = Message
-        fields = ['id', 'sender', 'recipient', 'group', 'sender_id', 'recipient_id', 'group_id', 'content', 'timestamp', 'delivered_at', 'read_at', 'files']
+        fields = ['id', 'sender', 'recipient', 'group', 'sender_id', 'recipient_id', 'group_id', 'content', 'timestamp', 'delivered_at', 'read_at', 'files', 'file_urls']
+
+    def create(self, validated_data):
+        file_urls = validated_data.pop('file_urls', [])
+        message = Message.objects.create(**validated_data)
+        for file_data in file_urls:
+            File.objects.create(
+                file=file_data['file'],
+                file_type=file_data['file_type'],
+                message=message
+            )
+        return message

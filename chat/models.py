@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 import random
 
 class User(models.Model):
@@ -18,8 +18,19 @@ class User(models.Model):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+
     def __str__(self):
         return self.display_name or self.username
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['username']),
+        ]
 
 class Group(models.Model):
     name = models.CharField(max_length=100)
@@ -35,8 +46,16 @@ class Group(models.Model):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password) if self.password else not raw_password
+
     def __str__(self):
         return self.name
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+        ]
 
 class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
@@ -50,11 +69,28 @@ class Message(models.Model):
     def __str__(self):
         return f"{self.sender} -> {self.recipient or self.group}: {self.content[:50]}"
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['timestamp']),
+            models.Index(fields=['sender', 'recipient']),
+            models.Index(fields=['group']),
+        ]
+
 class File(models.Model):
     file = models.FileField(upload_to='uploads/')
-    file_type = models.CharField(max_length=20)
+    file_type = models.CharField(max_length=20, choices=[
+        ('image', 'Image'),
+        ('video', 'Video'),
+        ('audio', 'Audio'),
+        ('other', 'Other'),
+    ])
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='files', null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.file.name
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['uploaded_at']),
+        ]
