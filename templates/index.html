@@ -1,286 +1,276 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>چت آنلاین امن</title>
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <link rel="icon" href="{% static 'chat/favicon.png' %}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>چت</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://v1.fontapi.ir/css/Vazir">
     <style>
-        :root {
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --accent: #4895ef;
-            --dark: #1b263b;
-            --darker: #0d1b2a;
-            --light: #f8f9fa;
-            --gray: #adb5bd;
-            --success: #4cc9f0;
-            --error: #f72585;
-            --warning: #f8961e;
-        }
-
-        .theme-light {
-            --dark: #ffffff;
-            --darker: #f0f0f0;
-            --light: #000000;
-            --gray: #666666;
-        }
-
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Vazirmatn', sans-serif;
+            box-sizing: border-box;
+            font-family: 'Vazir', sans-serif;
         }
-
         body {
-            background-color: var(--darker);
-            color: var(--light);
-            min-height: 100vh;
-            font-size: 16px;
-            overflow-x: hidden;
+            background: #f0f2f5;
+            color: #1c2526;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
-
-        .auth-container {
+        #auth-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, var(--dark), var(--darker));
-            padding: 1rem;
+            height: 100vh;
+            background: linear-gradient(135deg, #0088cc, #00c4b4);
+            animation: gradient 15s ease infinite;
         }
-
-        .auth-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 1.5rem;
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .auth-box {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             text-align: center;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
         }
-
-        .auth-card h1 {
-            margin-bottom: 1.2rem;
-            color: var(--accent);
-            font-size: 1.6rem;
+        .auth-box:hover {
+            transform: translateY(-5px);
         }
-
-        .input-group {
-            margin-bottom: 1.2rem;
-            position: relative;
+        .auth-box h2 {
+            margin-bottom: 1.5rem;
+            color: #0088cc;
+            font-weight: 700;
         }
-
-        .input-group input {
+        .auth-box input {
             width: 100%;
-            padding: 0.7rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: var(--light);
-            font-size: 0.9rem;
+            padding: 0.9rem;
+            margin: 0.6rem 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: #f9f9f9;
+            transition: border-color 0.3s;
         }
-
-        .input-group input:focus {
+        .auth-box input:focus {
+            border-color: #0088cc;
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(72, 149, 239, 0.3);
         }
-
-        .btn {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            border: none;
-            padding: 0.7rem 1rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
-        }
-
-        .btn-icon {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 0.5rem;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-        }
-
-        .chat-container {
-            display: none;
-            height: 100vh;
-            flex-direction: column;
-        }
-
-        .chat-sidebar {
-            background: rgba(27, 38, 59, 0.9);
+        .auth-box button {
             width: 100%;
-            max-height: 60%;
-            padding: 1rem;
-            overflow-y: auto;
-            position: absolute;
-            top: 0;
-            left: -100%;
-            transition: all 0.3s ease;
+            padding: 0.9rem;
+            background: #0088cc;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
         }
-
-        .chat-sidebar.active {
-            left: 0;
+        .auth-box button:hover {
+            background: #00c4b4;
+            transform: scale(1.02);
         }
-
-        .chat-main {
+        #chat-container {
+            display: none;
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
+            overflow: hidden;
+            background: #fff;
         }
-
-        .chat-header {
-            background: rgba(27, 38, 59, 0.95);
-            padding: 0.7rem;
+        #chat-sidebar {
+            width: 320px;
+            background: #f7f9fc;
+            border-left: 1px solid #e0e0e0;
+            overflow-y: auto;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-header {
+            padding: 1rem;
+            background: linear-gradient(90deg, #0088cc, #00c4b4);
+            color: #fff;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .chat-messages {
-            flex: 1;
-            padding: 0.8rem;
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .search-bar {
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: #fff;
+            transition: border-color 0.3s;
+        }
+        .search-bar input:focus {
+            border-color: #0088cc;
+            outline: none;
+        }
+        .accordion {
+            padding: 0.8rem 1rem;
+            background: #f7f9fc;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.3s;
+        }
+        .accordion:hover {
+            background: #e6f0fa;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .accordion-content.active {
+            max-height: 500px;
             overflow-y: auto;
         }
-
-        .chat-input {
-            background: rgba(27, 38, 59, 0.95);
-            padding: 0.7rem;
-        }
-
-        .message-input {
-            display: flex;
-            gap: 0.4rem;
-            align-items: center;
-            flex-wrap: nowrap;
-        }
-
-        .message-input textarea {
-            flex: 1;
-            padding: 0.7rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: var(--light);
-            resize: none;
-            min-height: 48px;
-            font-size: 0.9rem;
-        }
-
-        .message {
-            margin-bottom: 0.8rem;
-        }
-
-        .message-header {
+        .group-item, .user-item, .search-group-item {
+            padding: 0.8rem 1rem;
             display: flex;
             align-items: center;
-            margin-bottom: 0.2rem;
-        }
-
-        .message-username {
-            font-weight: 600;
-            margin-left: 0.5rem;
-            font-size: 0.85rem;
-        }
-
-        .message-time {
-            font-size: 0.65rem;
-            color: var(--gray);
-        }
-
-        .message-content {
-            background: rgba(67, 97, 238, 0.2);
-            padding: 0.7rem;
-            border-radius: 10px;
-            display: inline-block;
-            max-width: 80%;
-            word-break: break-word;
-            font-size: 0.9rem;
-        }
-
-        .groups-list, .users-list {
-            margin-top: 0.8rem;
-        }
-
-        .user-item, .group-item {
-            display: flex;
-            align-items: center;
-            padding: 0.6rem;
-            border-radius: 8px;
-            margin-bottom: 0.4rem;
+            border-bottom: 1px solid #e0e0e0;
             cursor: pointer;
-            background: rgba(255, 255, 255, 0.05);
+            transition: background 0.3s;
         }
-
-        .user-avatar, .group-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--primary);
+        .group-item:hover, .user-item:hover, .search-group-item:hover {
+            background: #e6f0fa;
+        }
+        .group-avatar, .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: #0088cc;
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-left: 0.6rem;
-            font-size: 0.9rem;
-        }
-
-        .status-indicator {
-            width: 8px;
-            height: 8px;
             border-radius: 50%;
-            display: inline-block;
-            margin-left: 0.4rem;
+            margin-left: 0.7rem;
+            font-size: 1.3rem;
         }
-
-        .status-online {
-            background: var(--success);
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: auto;
+            border: 2px solid #fff;
         }
-
-        .status-offline {
-            background: var(--gray);
+        .status-online { background: #00c4b4; }
+        .status-offline { background: #dc3545; }
+        #chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #e6f0fa;
         }
-
-        .sidebar-toggle {
-            background: var(--primary);
-            color: white;
-            border: none;
+        .chat-header {
+            padding: 1rem;
+            background: linear-gradient(90deg, #0088cc, #00c4b4);
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background: #fff;
+        }
+        .message {
+            margin-bottom: 1rem;
+            max-width: 70%;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 0.4rem;
+        }
+        .message-content {
+            background: #e6f0fa;
+            padding: 0.8rem 1rem;
+            border-radius: 15px 15px 15px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        .message-system {
+            text-align: center;
+            color: #666;
+            font-size: 0.85rem;
+            margin: 1rem 0;
+            background: #f0f2f5;
             padding: 0.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
+            border-radius: 10px;
         }
-
-        .notification {
-            position: fixed;
-            top: 15px;
-            right: 15px;
+        .chat-input {
+            padding: 1rem;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            background: #fff;
+        }
+        #message-input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 25px;
+            margin-left: 0.7rem;
+            font-size: 0.95rem;
+            resize: none;
+            background: #f9f9f9;
+            transition: border-color 0.3s;
+        }
+        #message-input:focus {
+            border-color: #0088cc;
+            outline: none;
+        }
+        .chat-input button {
+            background: #0088cc;
+            color: #fff;
+            border: none;
             padding: 0.8rem;
-            background: rgba(27, 38, 59, 0.9);
-            border-radius: 8px;
-            z-index: 10000;
-            font-size: 0.9rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
         }
-
+        .chat-input button:hover {
+            background: #00c4b4;
+            transform: scale(1.1);
+        }
         .modal {
             display: none;
             position: fixed;
@@ -288,218 +278,242 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 10000;
+            background: rgba(0, 0, 0, 0.6);
             justify-content: center;
             align-items: center;
-        }
-
-        .emoji-picker {
-            display: none;
-            position: absolute;
-            bottom: 60px;
-            right: 10px;
-            background: rgba(27, 38, 59, 0.95);
-            padding: 0.8rem;
-            border-radius: 8px;
             z-index: 1000;
         }
-
-        .emoji-picker span {
-            font-size: 1.2rem;
+        .modal-content {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+        .modal-content:hover {
+            transform: translateY(-5px);
+        }
+        .modal-content input,
+        .modal-content select,
+        .modal-content textarea {
+            width: 100%;
+            padding: 0.9rem;
+            margin: 0.6rem 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            background: #f9f9f9;
+            transition: border-color 0.3s;
+        }
+        .modal-content input:focus,
+        .modal-content textarea:focus {
+            border-color: #0088cc;
+            outline: none;
+        }
+        .modal-content button {
+            padding: 0.9rem 1.5rem;
+            background: #0088cc;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
             cursor: pointer;
-            margin: 0.2rem;
+            transition: background 0.3s, transform 0.2s;
         }
-
-        .file-input {
+        .modal-content button:hover {
+            background: #00c4b4;
+            transform: scale(1.02);
+        }
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #666;
+        }
+        .close-btn:hover {
+            color: #0088cc;
+        }
+        .notification {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: #333;
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            z-index: 1001;
+            animation: fadeInOut 3s ease;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        .btn {
+            background: #0088cc;
+            color: #fff;
+            border: none;
+            padding: 0.7rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .btn:hover {
+            background: #00c4b4;
+            transform: scale(1.02);
+        }
+        #profile-image {
             display: none;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 1rem auto;
+            object-fit: cover;
         }
-
-        .chat-header-actions {
+        #profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: #0088cc;
+            color: #fff;
             display: flex;
-            gap: 0.4rem;
             align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin: 1rem auto;
+            font-size: 2.5rem;
         }
         @media (max-width: 768px) {
-            body {
-                font-size: 14px;
+            #chat-sidebar {
+                width: 100%;
+                position: fixed;
+                right: -100%;
+                top: 0;
+                height: 100%;
+                z-index: 999;
+                transition: right 0.3s ease;
             }
-            .auth-card {
-                padding: 1.2rem;
-                max-width: 90%;
-            }
-            .auth-card h1 {
-                font-size: 1.4rem;
-            }
-            .input-group input {
-                padding: 0.6rem;
-                font-size: 0.85rem;
-            }
-            .btn {
-                padding: 0.6rem 0.9rem;
-                font-size: 0.85rem;
-            }
-            .btn-icon {
-                width: 32px;
-                height: 32px;
-                padding: 0.4rem;
+            #chat-sidebar.active {
+                right: 0;
             }
             .chat-header {
-                padding: 0.6rem;
+                padding: 0.8rem;
             }
-            .chat-messages {
-                padding: 0.6rem;
-            }
-            .chat-input {
-                padding: 0.6rem;
-            }
-            .message-input {
-                gap: 0.3rem;
-            }
-            .message-input textarea {
-                min-height: 40px;
-                font-size: 0.85rem;
-                padding: 0.6rem;
-            }
-            .message-username {
-                font-size: 0.8rem;
-            }
-            .message-time {
-                font-size: 0.6rem;
+            .chat-header h2 {
+                font-size: 1rem;
             }
             .message-content {
-                padding: 0.6rem;
-                font-size: 0.85rem;
-            }
-            .user-item, .group-item {
-                padding: 0.5rem;
-            }
-            .user-avatar, .group-avatar {
-                width: 28px;
-                height: 28px;
-                font-size: 0.8rem;
-            }
-            .sidebar-toggle {
-                width: 32px;
-                height: 32px;
-            }
-            .notification {
-                top: 10px;
-                right: 10px;
-                padding: 0.7rem;
-                font-size: 0.85rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .message-input {
-                flex-wrap: wrap;
-            }
-            .btn-icon {
-                width: 30px;
-                height: 30px;
-            }
-            .chat-input {
-                padding: 0.5rem;
+                font-size: 0.9rem;
+                padding: 0.7rem 1rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="auth-container" id="auth-container">
-        <div class="auth-card">
-            <h1>ورود به چت آنلاین</h1>
-            <form id="auth-form">
-                {% csrf_token %}
-                <div class="input-group">
-                    <input type="text" id="username" name="username" placeholder="نام کاربری" autocomplete="off">
-                </div>
-                <div class="input-group">
-                    <input type="password" id="password" name="password" placeholder="رمز عبور" autocomplete="off">
-                </div>
-                <button type="button" class="btn" id="login-btn">ورود / ثبت‌نام</button>
-            </form>
+    <div id="auth-container">
+        <div class="auth-box">
+            <h2>ورود به چت</h2>
+            <input type="text" id="username" placeholder="نام کاربری">
+            <input type="text" id="display_name" placeholder="نام نمایشی (اختیاری)">
+            <input type="password" id="password" placeholder="رمز عبور">
+            <button id="login-btn">ورود</button>
         </div>
     </div>
-
-    <div class="chat-container" id="chat-container">
-        <div class="chat-sidebar" id="chat-sidebar">
-            <h3>گروه‌ها و کاربران</h3>
-            <button class="btn" id="create-group-btn">ایجاد گروه جدید</button>
-            <div class="groups-list" id="groups-list"></div>
-            <div class="users-list" id="users-list"></div>
-        </div>
-        <div class="chat-main">
-<div class="chat-header">
-    <button class="sidebar-toggle" id="sidebar-toggle">
-        <i class="fas fa-users"></i>
-    </button>
-    <h3 id="current-chat">چت گروهی</h3>
-    <div class="chat-header-actions">
-        <button class="btn btn-icon" id="theme-toggle" title="تغییر تم">
-            <i class="fas fa-moon"></i>
-        </button>
-        <button class="btn btn-icon" id="stats-btn" title="آمار کاربر">
-            <i class="fas fa-chart-bar"></i>
-        </button>
-    </div>
-</div>
-            <div class="chat-messages" id="chat-messages">
-                <div class="message-system">به چت گروهی خوش آمدید!</div>
+    <div id="chat-container">
+        <div id="chat-sidebar">
+            <div class="sidebar-header">
+                <h2>چت‌ها</h2>
+                <button id="theme-toggle" title="تغییر تم"><i class="fas fa-moon"></i></button>
             </div>
+            <div class="search-bar">
+                <input type="text" id="search-users" placeholder="جستجوی کاربران...">
+                <input type="text" id="search-groups" placeholder="جستجوی گروه‌ها...">
+            </div>
+            <div class="accordion" id="groups-accordion">
+                <span>گروه‌ها</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="accordion-content" id="groups-content">
+                <div id="groups-list"></div>
+            </div>
+            <div class="accordion" id="profiles-accordion">
+                <span>پروف‌ها</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="accordion-content" id="profiles-content">
+                <div id="profiles-list"></div>
+            </div>
+            <div class="accordion" id="search-groups-accordion">
+                <span>نتایج جستجوی گروه‌ها</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="accordion-content" id="search-groups-content">
+                <div id="search-groups-list"></div>
+            </div>
+            <div style="padding: 1rem;">
+                <button id="create-group-btn" class="btn"><i class="fas fa-plus"></i> ایجاد گروه</button>
+                <button id="join-group-btn" class="btn"><i class="fas fa-sign-in-alt"></i> پیوستن به گروه</button>
+                <button id="profile-btn" class="btn"><i class="fas fa-user"></i> پروفایل</button>
+            </div>
+        </div>
+        <div id="chat-main">
+            <div class="chat-header">
+                <h2 id="current-chat">چت گروهی</h2>
+                <div>
+                    <button id="emoji-btn" title="اموجی"><i class="fas fa-smile"></i></button>
+                    <button onclick="document.getElementById('file-input').click()" title="ارسال فایل"><i class="fas fa-paperclip"></i></button>
+                    <input type="file" id="file-input" multiple style="display: none;">
+                </div>
+            </div>
+            <div class="chat-messages" id="chat-messages"></div>
             <div class="chat-input">
-                <div class="message-input">
-                    <textarea id="message-input" placeholder="پیام خود را بنویسید..." rows="2"></textarea>
-                    <button class="btn btn-icon" id="emoji-btn" title="انتخاب ایموجی">
-                        <i class="fas fa-smile"></i>
-                    </button>
-                    <label for="file-input" class="btn btn-icon" title="انتخاب فایل">
-                        <i class="fas fa-paperclip"></i>
-                    </label>
-                    <input type="file" id="file-input" class="file-input" multiple accept="image/*,video/*,audio/*">
-                    <button class="btn btn-icon" id="send-btn" title="ارسال یا ضبط ویس">
-                        <i class="fas fa-microphone"></i>
-                    </button>
-                </div>
-                <div class="emoji-picker" id="emoji-picker">
-                    <span onclick="insertEmoji('😊')">😊</span>
-                    <span onclick="insertEmoji('👍')">👍</span>
-                    <span onclick="insertEmoji('❤️')">❤️</span>
-                    <span onclick="insertEmoji('😂')">😂</span>
-                    <span onclick="insertEmoji('😢')">😢</span>
-                </div>
+                <textarea id="message-input" placeholder="پیام خود را بنویسید..."></textarea>
+                <button id="send-btn" title="ارسال پیام"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
-
-    <div class="modal" id="group-modal">
-        <div class="auth-card">
-            <h1>ایجاد گروه</h1>
-            <form id="group-form">
-                <div class="input-group">
-                    <input type="text" id="group-name" placeholder="نام گروه" required>
-                </div>
-                <div class="input-group">
-                    <textarea id="group-description" placeholder="توضیحات (اختیاری)"></textarea>
-                </div>
-                <div class="input-group">
-                    <select id="group-members" multiple style="width: 100%; padding: 0.7rem; font-size: 0.9rem;">
-                    </select>
-                </div>
-                <button type="button" class="btn" id="save-group-btn">ایجاد</button>
-                <button type="button" class="btn" onclick="closeGroupModal()">لغو</button>
-            </form>
+    <div id="group-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeGroupModal()"><i class="fas fa-times"></i></button>
+            <h2>ایجاد گروه</h2>
+            <input type="text" id="group-name" placeholder="نام گروه">
+            <textarea id="group-description" placeholder="توضیحات گروه"></textarea>
+            <input type="password" id="group-password" placeholder="رمز عبور (اختیاری)">
+            <input type="file" id="group-image-input" accept="image/*">
+            <button id="save-group-btn">ایجاد گروه</button>
         </div>
     </div>
-
-    <div class="modal" id="stats-modal">
-        <div class="auth-card">
-            <h1>آمار کاربر</h1>
-            <div id="stats-content"></div>
-            <button type="button" class="btn" onclick="closeStatsModal()">بستن</button>
+    <div id="join-group-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeJoinGroupModal()"><i class="fas fa-times"></i></button>
+            <h2>پیوستن به گروه</h2>
+            <input type="text" id="join-group-id" placeholder="شناسه گروه">
+            <input type="password" id="join-group-password" placeholder="رمز عبور (اگر دارد)">
+            <button id="join-group-btn-modal">پیوستن</button>
         </div>
     </div>
-
+    <div id="profile-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeProfileModal()"><i class="fas fa-times"></i></button>
+            <h2>پروفایل</h2>
+            <div id="profile-avatar"></div>
+            <img id="profile-image" alt="تصویر پروفایل">
+            <input type="file" id="profile-image-input" accept="image/*">
+            <input type="text" id="profile-username" placeholder="نام کاربری">
+            <input type="text" id="profile-display-name" placeholder="نام نمایشی">
+            <input type="password" id="profile-password" placeholder="رمز عبور جدید (اختیاری)">
+            <button id="save-profile-btn">ذخیره</button>
+            <button id="logout-btn" style="background: #dc3545;">خروج</button>
+        </div>
+    </div>
     <script>
         let currentUser = '';
         let currentUserId = null;
@@ -507,32 +521,38 @@
         let lastMessageId = 0;
         let currentPrivateUserId = null;
         let currentGroupId = null;
-        let groupMessages = [];
-        let privateMessages = {};
-        let renderedMessageIds = new Set();
-        let isRecording = false;
-        let mediaRecorder = null;
+        let pollingInterval = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const loginBtn = document.getElementById('login-btn');
             const sendBtn = document.getElementById('send-btn');
-            const sidebarToggle = document.getElementById('sidebar-toggle');
             const createGroupBtn = document.getElementById('create-group-btn');
+            const joinGroupBtn = document.getElementById('join-group-btn');
+            const joinGroupBtnModal = document.getElementById('join-group-btn-modal');
             const emojiBtn = document.getElementById('emoji-btn');
             const fileInput = document.getElementById('file-input');
-            const themeToggle = document.getElementById('theme-toggle');
-            const statsBtn = document.getElementById('stats-btn');
+            const profileBtn = document.getElementById('profile-btn');
             const messageInput = document.getElementById('message-input');
+            const searchUsers = document.getElementById('search-users');
+            const searchGroups = document.getElementById('search-groups');
+            const saveProfileBtn = document.getElementById('save-profile-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const profileImageInput = document.getElementById('profile-image-input');
 
             loginBtn.addEventListener('click', enterChat);
-            sidebarToggle.addEventListener('click', toggleSidebar);
+            sendBtn.addEventListener('click', sendMessage);
             createGroupBtn.addEventListener('click', openGroupModal);
+            joinGroupBtn.addEventListener('click', () => {
+                document.getElementById('join-group-modal').style.display = 'flex';
+            });
+            joinGroupBtnModal.addEventListener('click', joinGroup);
             emojiBtn.addEventListener('click', toggleEmojiPicker);
             fileInput.addEventListener('change', handleFileSelect);
-            themeToggle.addEventListener('click', toggleTheme);
-            statsBtn.addEventListener('click', showStats);
+            profileBtn.addEventListener('click', showProfile);
+            saveProfileBtn.addEventListener('click', saveProfile);
+            logoutBtn.addEventListener('click', logout);
+            profileImageInput.addEventListener('change', handleProfileImageSelect);
 
-            messageInput.addEventListener('input', updateSendButton);
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -540,109 +560,34 @@
                 }
             });
 
-            // Handle voice recording with hold
-            sendBtn.addEventListener('mousedown', startVoiceRecording);
-            sendBtn.addEventListener('mouseup', stopVoiceRecording);
-            sendBtn.addEventListener('touchstart', startVoiceRecording);
-            sendBtn.addEventListener('touchend', stopVoiceRecording);
-            sendBtn.addEventListener('click', (e) => {
-                if (!isRecording && messageInput.value.trim()) {
-                    sendMessage();
-                }
+            searchUsers.addEventListener('input', () => {
+                const query = searchUsers.value.trim();
+                fetchUsers(query);
             });
 
-            updateSendButton();
+            searchGroups.addEventListener('input', () => {
+                const query = searchGroups.value.trim();
+                fetchGroupSearch(query);
+            });
+
+            document.getElementById('groups-accordion').addEventListener('click', () => {
+                toggleAccordion('groups-content');
+            });
+            document.getElementById('profiles-accordion').addEventListener('click', () => {
+                toggleAccordion('profiles-content');
+            });
+            document.getElementById('search-groups-accordion').addEventListener('click', () => {
+                toggleAccordion('search-groups-content');
+            });
         });
 
-        function toggleSidebar() {
-            document.getElementById('chat-sidebar').classList.toggle('active');
+        function toggleAccordion(contentId) {
+            const content = document.getElementById(contentId);
+            content.classList.toggle('active');
         }
 
         function toggleEmojiPicker() {
-            const picker = document.getElementById('emoji-picker');
-            picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function insertEmoji(emoji) {
-            const messageInput = document.getElementById('message-input');
-            messageInput.value += emoji;
-            toggleEmojiPicker();
-            messageInput.focus();
-            updateSendButton();
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('theme-light');
-            const icon = document.getElementById('theme-toggle').querySelector('i');
-            icon.classList.toggle('fa-moon');
-            icon.classList.toggle('fa-sun');
-        }
-
-        function updateSendButton() {
-            const messageInput = document.getElementById('message-input');
-            const sendBtn = document.getElementById('send-btn');
-            const icon = sendBtn.querySelector('i');
-            if (messageInput.value.trim()) {
-                icon.classList.replace('fa-microphone', 'fa-paper-plane');
-                sendBtn.title = 'ارسال پیام';
-            } else {
-                icon.classList.replace('fa-paper-plane', 'fa-microphone');
-                sendBtn.title = 'ضبط ویس (نگه دارید)';
-            }
-        }
-
-        function startVoiceRecording(e) {
-            e.preventDefault();
-            if (document.getElementById('message-input').value.trim()) return;
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    mediaRecorder = new MediaRecorder(stream);
-                    let audioChunks = [];
-                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                        uploadVoiceMessage(audioBlob);
-                        stream.getTracks().forEach(track => track.stop());
-                    };
-                    mediaRecorder.start();
-                    isRecording = true;
-                    document.getElementById('send-btn').querySelector('i').classList.replace('fa-microphone', 'fa-stop');
-                })
-                .catch(error => {
-                    console.error('خطا در ضبط صدا:', error);
-                    showNotification('دسترسی به میکروفون ممکن نیست', 'error');
-                });
-        }
-
-        function stopVoiceRecording() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
-                document.getElementById('send-btn').querySelector('i').classList.replace('fa-stop', 'fa-microphone');
-            }
-        }
-
-        function uploadVoiceMessage(audioBlob) {
-            const formData = new FormData();
-            formData.append('files', audioBlob, 'voice-message.mp3');
-            fetch('/api/upload/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCsrfToken()
-                },
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'error') {
-                        throw new Error(data.message);
-                    }
-                    sendMessageWithFiles(data.file_urls);
-                })
-                .catch(error => {
-                    console.error('خطا در آپلود ویس:', error);
-                    showNotification(`خطا در آپلود ویس: ${error.message}`, 'error');
-                });
+            alert('اموجی‌ها هنوز پیاده‌سازی نشده‌اند!');
         }
 
         function handleFileSelect(e) {
@@ -652,156 +597,126 @@
             Array.from(files).forEach(file => formData.append('files', file));
             fetch('/api/upload/', {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCsrfToken()
-                },
+                headers: { 'X-CSRFToken': getCsrfToken() },
                 body: formData
             })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'error') {
-                        throw new Error(data.message);
-                    }
+                    if (data.status === 'error') throw new Error(data.message);
                     sendMessageWithFiles(data.file_urls);
                 })
                 .catch(error => {
-                    console.error('خطا در آپلود فایل:', error);
                     showNotification(`خطا در آپلود فایل: ${error.message}`, 'error');
                 });
         }
 
+        function handleProfileImageSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('profile_image', file);
+            fetch('/api/users/current/', {
+                method: 'PATCH',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') throw new Error(data.message);
+                    document.getElementById('profile-image').src = data.profile_image;
+                    document.getElementById('profile-image').style.display = 'block';
+                    showNotification('تصویر پروفایل به‌روزرسانی شد', 'success');
+                })
+                .catch(error => {
+                    showNotification(`خطا در آپلود تصویر: ${error.message}`, 'error');
+                });
+        }
+
         function getCsrfToken() {
-            const token = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
-            return token || '';
+            return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
         }
 
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
             notification.className = 'notification';
-            notification.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'info-circle'}" style="margin-left: 8px;"></i>${message}`;
+            notification.textContent = message;
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 3000);
         }
 
         function enterChat() {
             const username = document.getElementById('username').value.trim();
+            const displayName = document.getElementById('display_name').value.trim();
             const password = document.getElementById('password').value.trim();
             if (!username || !password) {
-                showNotification('لطفاً نام کاربری و رمز عبور را وارد کنید', 'error');
+                showNotification('نام کاربری و رمز عبور الزامی است', 'error');
                 return;
             }
-
             fetch('/api/users/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ username, display_name: displayName, password })
             })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'error') {
-                        throw new Error(data.message);
-                    }
-                    currentUser = username;
+                    if (data.status === 'error') throw new Error(data.message);
+                    currentUser = data.display_name || username;
                     currentUserId = data.user_id;
-
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('chat-container').style.display = 'flex';
                     document.getElementById('current-chat').textContent = `چت گروهی - ${currentUser}`;
-
+                    fetchGroups();
+                    fetchChattedUsers();
                     startPolling();
                 })
                 .catch(error => {
-                    console.error('خطا در ورود:', error);
                     showNotification(`خطا در ورود: ${error.message}`, 'error');
                 });
         }
 
         function startPolling() {
-            fetchMessages();
-            fetchUsers();
-            fetchGroups();
-            setInterval(() => {
-                fetchMessages();
-                fetchUsers();
-                fetchGroups();
-            }, 5000);
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(fetchMessages, 2000);
         }
 
         function fetchMessages() {
-            let url = '/api/messages/';
+            let url = `/api/messages/?last_message_id=${lastMessageId}`;
             if (currentTab === 'group' && currentGroupId) {
-                url += `?group_id=${currentGroupId}`;
+                url += `&group_id=${currentGroupId}`;
             } else if (currentTab === 'private' && currentPrivateUserId) {
-                url += `?recipient_id=${currentPrivateUserId}`;
+                url += `&recipient_id=${currentPrivateUserId}`;
             }
-
             fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(messages => {
-                    if (!Array.isArray(messages)) {
-                        console.error('Invalid messages response:', messages);
-                        showNotification('پاسخ پیام‌ها نامعتبر است', 'error');
-                        return;
-                    }
-
+                    if (!Array.isArray(messages)) return;
                     const messagesContainer = document.getElementById('chat-messages');
-                    const isAtBottom = messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - 50;
-
                     messages.forEach(message => {
-                        if (!message || !message.id || !message.sender) {
-                            console.warn('Skipping invalid message:', message);
-                            return;
-                        }
-
-                        if (message.id > lastMessageId && !renderedMessageIds.has(message.id)) {
-                            if (message.group && currentTab === 'group' && currentGroupId === message.group.id) {
-                                groupMessages.push(message);
-                            } else if (!message.group && currentTab === 'private' && (message.sender.id === currentUserId || message.recipient?.id === currentUserId)) {
-                                const otherUserId = message.sender.id === currentUserId ? message.recipient?.id : message.sender.id;
-                                if (otherUserId) {
-                                    if (!privateMessages[otherUserId]) privateMessages[otherUserId] = [];
-                                    privateMessages[otherUserId].push(message);
-                                }
-                            } else {
-                                return;
-                            }
-
-                            lastMessageId = Math.max(lastMessageId, message.id);
-                            renderedMessageIds.add(message.id);
-                            addMessage(message);
-                        }
+                        if (!message.id || !message.sender) return;
+                        addMessage(message);
+                        lastMessageId = Math.max(lastMessageId, message.id);
                     });
-
-                    if (isAtBottom) {
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                    }
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 })
                 .catch(error => {
-                    console.error('خطا در دریافت پیام‌ها:', error);
                     showNotification(`خطا در دریافت پیام‌ها: ${error.message}`, 'error');
                 });
         }
 
-        function fetchUsers() {
-            fetch('/api/users/')
+        function fetchUsers(query = '') {
+            let url = '/api/users/';
+            if (query) url += `?search=${encodeURIComponent(query)}`;
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    if (!data.users) {
-                        console.warn('No users in response:', data);
-                        return;
-                    }
+                    if (!data.users) return;
+                    data.users.sort((a, b) => b.is_online - a.is_online);
                     updateUsersList(data.users);
                 })
                 .catch(error => {
-                    console.error('خطا در دریافت کاربران:', error);
                     showNotification('خطا در دریافت کاربران', 'error');
                 });
         }
@@ -810,72 +725,111 @@
             fetch('/api/groups/')
                 .then(response => response.json())
                 .then(groups => {
-                    if (!Array.isArray(groups)) {
-                        console.warn('Invalid groups response:', groups);
-                        return;
-                    }
+                    if (!Array.isArray(groups)) return;
                     const groupsList = document.getElementById('groups-list');
                     groupsList.innerHTML = '';
                     groups.forEach(group => {
                         const groupElement = document.createElement('div');
                         groupElement.className = 'group-item';
+                        const avatarContent = group.image ? `<img src="${group.image}" style="width: 100%; height: 100%; border-radius: 50%;" />` : group.name.charAt(0);
                         groupElement.innerHTML = `
-                            <div class="group-avatar">${group.name.charAt(0)}</div>
+                            <div class="group-avatar">${avatarContent}</div>
                             <div>${group.name}</div>
                         `;
-                        groupElement.onclick = () => {
-                            startGroupChat(group.id, group.name);
-                            toggleSidebar();
-                        };
+                        groupElement.onclick = () => startGroupChat(group.id, group.name);
                         groupsList.appendChild(groupElement);
                     });
                 })
                 .catch(error => {
-                    console.error('خطا در دریافت گروه‌ها:', error);
                     showNotification('خطا در دریافت گروه‌ها', 'error');
                 });
         }
 
+        function fetchGroupSearch(query = '') {
+            let url = '/api/groups/search/';
+            if (query) url += `?search=${encodeURIComponent(query)}`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.groups) return;
+                    const searchGroupsList = document.getElementById('search-groups-list');
+                    searchGroupsList.innerHTML = '';
+                    data.groups.forEach(group => {
+                        const groupElement = document.createElement('div');
+                        groupElement.className = 'search-group-item';
+                        const avatarContent = group.image ? `<img src="${group.image}" style="width: 100%; height: 100%; border-radius: 50%;" />` : group.name.charAt(0);
+                        groupElement.innerHTML = `
+                            <div class="group-avatar">${avatarContent}</div>
+                            <div>${group.name} (ID: ${group.id})</div>
+                            <button class="btn" onclick="joinGroupFromSearch(${group.id}, '${group.name}')">پیوستن</button>
+                        `;
+                        searchGroupsList.appendChild(groupElement);
+                    });
+                })
+                .catch(error => {
+                    showNotification('خطا در جستجوی گروه‌ها', 'error');
+                });
+        }
+
+        function joinGroupFromSearch(groupId, groupName) {
+            document.getElementById('join-group-id').value = groupId;
+            document.getElementById('join-group-modal').style.display = 'flex';
+        }
+
+        function fetchChattedUsers() {
+            fetch('/api/users/chatted/')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.users) return;
+                    const profilesList = document.getElementById('profiles-list');
+                    profilesList.innerHTML = '';
+                    data.users.forEach(user => {
+                        const userElement = document.createElement('div');
+                        userElement.className = 'user-item';
+                        const avatarContent = user.profile_image ? `<img src="${user.profile_image}" style="width: 100%; height: 100%; border-radius: 50%;" />` : (user.display_name || user.username).charAt(0);
+                        userElement.innerHTML = `
+                            <div class="user-avatar">${avatarContent}</div>
+                            <div>${user.display_name || user.username}</div>
+                            <span class="status-indicator ${user.is_online ? 'status-online' : 'status-offline'}"></span>
+                        `;
+                        userElement.onclick = () => startPrivateChat(user.id, user.display_name || user.username);
+                        profilesList.appendChild(userElement);
+                    });
+                })
+                .catch(error => {
+                    showNotification('خطا در دریافت پروف‌ها', 'error');
+                });
+        }
+
         function updateUsersList(users) {
-            const usersList = document.getElementById('users-list');
-            usersList.innerHTML = '';
+            const profilesList = document.getElementById('profiles-list');
+            profilesList.innerHTML = '';
             users.forEach(user => {
                 if (user.id !== currentUserId) {
                     const userElement = document.createElement('div');
                     userElement.className = 'user-item';
+                    const avatarContent = user.profile_image ? `<img src="${user.profile_image}" style="width: 100%; height: 100%; border-radius: 50%;" />` : (user.display_name || user.username).charAt(0);
                     userElement.innerHTML = `
-                        <div class="user-avatar">${user.username.charAt(0)}</div>
-                        <div>${user.username}</div>
+                        <div class="user-avatar">${avatarContent}</div>
+                        <div>${user.display_name || user.username}</div>
                         <span class="status-indicator ${user.is_online ? 'status-online' : 'status-offline'}"></span>
                     `;
-                    userElement.onclick = () => {
-                        startPrivateChat(user.id, user.username);
-                        toggleSidebar();
-                    };
-                    usersList.appendChild(userElement);
+                    userElement.onclick = () => startPrivateChat(user.id, user.display_name || user.username);
+                    profilesList.appendChild(userElement);
                 }
             });
         }
 
         function addMessage(message) {
-            if (!message.sender) {
-                console.warn('Message without sender:', message);
-                return;
-            }
-
-            if (message.group && (currentTab !== 'group' || currentGroupId !== message.group?.id)) return;
-            if (!message.group && currentTab === 'group') return;
-            if (currentTab === 'private' && message.sender.id !== currentPrivateUserId && message.recipient?.id !== currentPrivateUserId) return;
-
+            if (!message.sender) return;
             const messagesContainer = document.getElementById('chat-messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
             const time = new Date(message.timestamp);
             const timeStr = time.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-
             messageDiv.innerHTML = `
                 <div class="message-header">
-                    <span class="message-username">${message.sender.username}</span>
+                    <span class="message-username">${message.sender.display_name || message.sender.username}</span>
                     <span class="message-time">${timeStr}</span>
                 </div>
                 <div class="message-content">${message.content}</div>
@@ -885,10 +839,6 @@
                     const fileElement = document.createElement('div');
                     if (file.file_type === 'image') {
                         fileElement.innerHTML = `<img src="${file.file}" style="max-width: 180px; margin-top: 0.4rem;" />`;
-                    } else if (file.file_type === 'video') {
-                        fileElement.innerHTML = `<video src="${file.file}" controls style="max-width: 180px; margin-top: 0.4rem;"></video>`;
-                    } else if (file.file_type === 'audio') {
-                        fileElement.innerHTML = `<audio src="${file.file}" controls style="margin-top: 0.4rem;"></audio>`;
                     } else {
                         fileElement.innerHTML = `<a href="${file.file}" target="_blank">دانلود فایل</a>`;
                     }
@@ -905,201 +855,222 @@
                 showNotification('لطفاً پیامی بنویسید', 'error');
                 return;
             }
-
-            const messageData = {
-                content: message,
-                sender_id: currentUserId
-            };
+            const data = { content: message };
             if (currentTab === 'group' && currentGroupId) {
-                messageData.group_id = currentGroupId;
+                data.group_id = currentGroupId;
             } else if (currentTab === 'private' && currentPrivateUserId) {
-                messageData.recipient_id = currentPrivateUserId;
-            } else {
-                showNotification('لطفاً یک گروه یا کاربر را انتخاب کنید', 'error');
-                return;
+                data.recipient_id = currentPrivateUserId;
             }
-
             fetch('/api/messages/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify(messageData)
+                body: JSON.stringify(data)
             })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'error') {
-                        throw new Error(data.message);
-                    }
+                    if (data.status === 'error') throw new Error(data.message);
                     messageInput.value = '';
-                    showNotification('پیام ارسال شد', 'success');
                     fetchMessages();
-                    updateSendButton();
                 })
                 .catch(error => {
-                    console.error('خطا در ارسال پیام:', error);
                     showNotification(`خطا در ارسال پیام: ${error.message}`, 'error');
                 });
         }
 
         function sendMessageWithFiles(fileUrls) {
             const messageInput = document.getElementById('message-input');
-            const messageData = {
-                content: messageInput.value.trim(),
-                sender_id: currentUserId,
-                file_urls: fileUrls
-            };
+            const data = { content: messageInput.value.trim(), file_urls: fileUrls };
             if (currentTab === 'group' && currentGroupId) {
-                messageData.group_id = currentGroupId;
+                data.group_id = currentGroupId;
             } else if (currentTab === 'private' && currentPrivateUserId) {
-                messageData.recipient_id = currentPrivateUserId;
-            } else {
-                showNotification('لطفاً یک گروه یا کاربر را انتخاب کنید', 'error');
-                return;
+                data.recipient_id = currentPrivateUserId;
             }
-
             fetch('/api/messages/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify(messageData)
+                body: JSON.stringify(data)
             })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'error') {
-                        throw new Error(data.message);
-                    }
+                    if (data.status === 'error') throw new Error(data.message);
                     messageInput.value = '';
                     showNotification('فایل ارسال شد', 'success');
                     fetchMessages();
-                    updateSendButton();
                 })
                 .catch(error => {
-                    console.error('خطا در ارسال فایل:', error);
                     showNotification(`خطا در ارسال فایل: ${error.message}`, 'error');
                 });
         }
 
-        function showStats() {
-            fetch('/api/stats/')
+        function showProfile() {
+            fetch('/api/users/current/')
                 .then(response => response.json())
                 .then(data => {
-                    const statsContent = document.getElementById('stats-content');
-                    statsContent.innerHTML = `
-                        <p>تعداد پیام‌ها: ${data.message_count}</p>
-                        <p>تعداد فایل‌ها: ${data.file_count}</p>
-                        <p>تعداد ورودها: ${data.login_count}</p>
-                        <p>زمان آنلاین: ${data.online_time} ثانیه</p>
-                    `;
-                    document.getElementById('stats-modal').style.display = 'flex';
-                })
-                .catch(error => {
-                    console.error('خطا در دریافت آمار:', error);
-                    showNotification('خطا در دریافت آمار', 'error');
-                });
-        }
-
-        function closeStatsModal() {
-            document.getElementById('stats-modal').style.display = 'none';
-        }
-
-        function openGroupModal() {
-            document.getElementById('group-modal').style.display = 'flex';
-            document.getElementById('group-name').value = '';
-            document.getElementById('group-description').value = '';
-            const membersSelect = document.getElementById('group-members');
-            membersSelect.innerHTML = '';
-
-            fetch('/api/users/')
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.users) {
-                        console.warn('No users for group modal:', data);
-                        return;
+                    document.getElementById('profile-username').value = data.username;
+                    document.getElementById('profile-display-name').value = data.display_name || '';
+                    if (data.profile_image) {
+                        document.getElementById('profile-image').src = data.profile_image;
+                        document.getElementById('profile-image').style.display = 'block';
                     }
-                    data.users.forEach(user => {
-                        if (user.id !== currentUserId) {
-                            const option = document.createElement('option');
-                            option.value = user.id;
-                            option.textContent = user.username;
-                            membersSelect.appendChild(option);
-                        }
-                    });
+                    document.getElementById('profile-modal').style.display = 'flex';
                 })
                 .catch(error => {
-                    console.error('خطا در دریافت کاربران برای گروه:', error);
-                    showNotification('خطا در بارگذاری کاربران', 'error');
+                    showNotification('خطا در دریافت اطلاعات کاربر', 'error');
                 });
+        }
 
-            document.getElementById('save-group-btn').onclick = () => {
-                const name = document.getElementById('group-name').value.trim();
-                const description = document.getElementById('group-description').value.trim();
-                const memberIds = Array.from(document.getElementById('group-members').selectedOptions).map(opt => parseInt(opt.value));
+        function closeProfileModal() {
+            document.getElementById('profile-modal').style.display = 'none';
+        }
 
-                if (!name) {
-                    showNotification('نام گروه الزامی است', 'error');
-                    return;
-                }
-
-                fetch('/api/groups/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCsrfToken()
-                    },
-                    body: JSON.stringify({
-                        name,
-                        description,
-                        creator_id: currentUserId,
-                        member_ids: memberIds
-                    })
+        function saveProfile() {
+            const username = document.getElementById('profile-username').value.trim();
+            const displayName = document.getElementById('profile-display-name').value.trim();
+            const password = document.getElementById('profile-password').value.trim();
+            if (!username) {
+                showNotification('نام کاربری الزامی است', 'error');
+                return;
+            }
+            const data = { username, display_name: displayName };
+            if (password) data.password = password;
+            fetch('/api/users/current/', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') throw new Error(data.message);
+                    currentUser = data.display_name || data.username;
+                    showNotification('پروفایل به‌روزرسانی شد', 'success');
+                    closeProfileModal();
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'error') {
-                            throw new Error(data.message);
-                        }
-                        document.getElementById('group-modal').style.display = 'none';
-                        showNotification('گروه با موفقیت ایجاد شد', 'success');
-                        fetchGroups();
-                    })
-                    .catch(error => {
-                        console.error('خطا در ایجاد گروه:', error);
-                        showNotification(`خطا در ایجاد گروه: ${error.message}`, 'error');
-                    });
-            };
+                .catch(error => {
+                    showNotification(`خطا در به‌روزرسانی: ${error.message}`, 'error');
+                });
         }
 
-        function closeGroupModal() {
-            document.getElementById('group-modal').style.display = 'none';
-        }
-
-        function startGroupChat(groupId, groupName) {
-            currentTab = 'group';
-            currentGroupId = groupId;
-            currentPrivateUserId = null;
-            document.getElementById('current-chat').textContent = groupName;
-            document.getElementById('chat-messages').innerHTML = `<div class="message-system">چت گروه marshes: ${groupName}</div>`;
-            groupMessages = [];
-            lastMessageId = 0;
-            renderedMessageIds.clear();
-            fetchMessages();
+        function logout() {
+            fetch('/api/users/logout/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') throw new Error(data.message);
+                    if (pollingInterval) clearInterval(pollingInterval);
+                    window.location.reload();
+                })
+                .catch(error => {
+                    showNotification(`خطا در خروج: ${error.message}`, 'error');
+                });
         }
 
         function startPrivateChat(userId, username) {
             currentTab = 'private';
             currentPrivateUserId = userId;
             currentGroupId = null;
-            document.getElementById('current-chat').textContent = username;
+            document.getElementById('current-chat').textContent = `چت با ${username}`;
             document.getElementById('chat-messages').innerHTML = `<div class="message-system">چت خصوصی با ${username}</div>`;
-            privateMessages[userId] = privateMessages[userId] || [];
             lastMessageId = 0;
-            renderedMessageIds.clear();
             fetchMessages();
         }
+
+        function startGroupChat(groupId, groupName) {
+            currentTab = 'group';
+            currentGroupId = groupId;
+            currentPrivateUserId = null;
+            document.getElementById('current-chat').textContent = `گروه ${groupName}`;
+            document.getElementById('chat-messages').innerHTML = `<div class="message-system">چت گروهی: ${groupName}</div>`;
+            lastMessageId = 0;
+            fetchMessages();
+        }
+
+        function openGroupModal() {
+            document.getElementById('group-modal').style.display = 'flex';
+            document.getElementById('group-name').value = '';
+            document.getElementById('group-description').value = '';
+            document.getElementById('group-password').value = '';
+            document.getElementById('group-image-input').value = '';
+        }
+
+        function closeGroupModal() {
+            document.getElementById('group-modal').style.display = 'none';
+        }
+
+        function joinGroup() {
+            const groupId = document.getElementById('join-group-id').value.trim();
+            const password = document.getElementById('join-group-password').value.trim();
+            if (!groupId) {
+                showNotification('شناسه گروه الزامی است', 'error');
+                return;
+            }
+            fetch('/api/groups/join/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({ group_id: groupId, password })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') throw new Error(data.message);
+                    document.getElementById('join-group-modal').style.display = 'none';
+                    showNotification('با موفقیت به گروه پیوستید', 'success');
+                    fetchGroups();
+                })
+                .catch(error => {
+                    showNotification(`خطا در پیوستن: ${error.message}`, 'error');
+                });
+        }
+
+        function closeJoinGroupModal() {
+            document.getElementById('join-group-modal').style.display = 'none';
+        }
+
+        document.getElementById('save-group-btn').addEventListener('click', () => {
+            const name = document.getElementById('group-name').value.trim();
+            const description = document.getElementById('group-description').value.trim();
+            const password = document.getElementById('group-password').value.trim();
+            const imageInput = document.getElementById('group-image-input');
+            if (!name) {
+                showNotification('نام گروه الزامی است', 'error');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('description', description);
+            formData.append('password', password);
+            formData.append('creator_id', currentUserId);
+            if (imageInput.files[0]) {
+                formData.append('image', imageInput.files[0]);
+            }
+            fetch('/api/groups/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') throw new Error(data.message);
+                    document.getElementById('group-modal').style.display = 'none';
+                    showNotification('گروه با موفقیت ایجاد شد', 'success');
+                    fetchGroups();
+                })
+                .catch(error => {
+                    showNotification(`خطا در ایجاد گروه: ${error.message}`, 'error');
+                });
+        });
     </script>
 </body>
 </html>

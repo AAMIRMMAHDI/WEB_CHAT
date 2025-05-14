@@ -1,16 +1,15 @@
-# chat/serializers.py
 from rest_framework import serializers
-from .models import Message, User, File, Group, UserActivity
+from .models import User, Group, Message, File
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username']
+        fields = ['id', 'username', 'display_name', 'profile_image', 'is_online']
 
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['id', 'file', 'file_type', 'created_at']
+        fields = ['id', 'file', 'file_type', 'uploaded_at']
 
 class GroupSerializer(serializers.ModelSerializer):
     creator = UserSerializer(read_only=True)
@@ -18,13 +17,11 @@ class GroupSerializer(serializers.ModelSerializer):
     creator_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), source='creator', write_only=True
     )
-    member_ids = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), many=True, source='members', write_only=True, required=False
-    )
+    image = serializers.ImageField(allow_null=True, required=False)
 
     class Meta:
         model = Group
-        fields = ['id', 'name', 'description', 'creator', 'creator_id', 'members', 'member_ids', 'created_at', 'invite_code']
+        fields = ['id', 'name', 'description', 'creator', 'creator_id', 'members', 'image', 'created_at']
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
@@ -44,10 +41,3 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ['id', 'sender', 'recipient', 'group', 'sender_id', 'recipient_id', 'group_id', 'content', 'timestamp', 'delivered_at', 'read_at', 'files']
-
-class UserActivitySerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-
-    class Meta:
-        model = UserActivity
-        fields = ['id', 'user', 'action', 'timestamp', 'details']

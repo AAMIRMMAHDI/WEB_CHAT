@@ -1,229 +1,183 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
-from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
-from .models import User, Message, File, Group, UserActivity
-import os
-import logging
-from PIL import Image
-import io
-from django.core.files.base import ContentFile
-
-logger = logging.getLogger(__name__)
+from django.utils import timezone
+from .models import User, Message, File, Group
+from .serializers import UserSerializer, MessageSerializer, FileSerializer, GroupSerializer
+from django.db import models
 
 def index(request):
     return render(request, 'index.html')
 
 class UserList(APIView):
     def get(self, request):
-        try:
-            users = User.objects.all()
-            user_data = [
-                {
-                    'id': user.id,
-                    'username': user.username,
-                    'is_online': user.activities.filter(action='online').exists()
-                } for user in users
-            ]
-            return Response({'users': user_data})
-        except Exception as e:
-            logger.error(f"Error fetching users: {str(e)}")
-            return Response({'status': 'error', 'message': 'خطا در دریافت کاربران'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        search_query = request.GET.get('search', '')
+        users = User.objects.all()
+        if search_query:
+            users = users.filter(models.Q(username__icontains=search_query) | models.Q(display_name__icontains=search_query))
+        serializer = UserSerializer(users, many=True)
+        return Response({'users': serializer.data})
 
     def post(self, request):
-        try:
-            username = request.data.get('username')
-            password = request.data.get('password')
-            action = request.data.get('action')
+        username = request.data.get('username')
+        display_name = request.data.get('display_name')
+        password = request.data.get('password')
+        if not username or not password:
+            return Response({'status': 'error', 'message': 'نام کاربری و رمز عبور الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={'display_name': display_name, 'password': password, 'is_online': True}
+        )
+        if not created and not check_password(password, user.password):
+            return Response({'status': 'error', 'message': 'رمز عبور اشتباه است'}, status=status.HTTP_400_BAD_REQUEST)
+        user.is_online = True
+        user.save()
+        request.session['user_id'] = user.id
+        return Response({'status': 'success', 'user_id': user.id, 'display_name': user.display_name or user.username})
 
-            if action == 'online':
-                user_id = request.session.get('user_id')
-                if not user_id:
-                    logger.error("No user_id in session for online action")
-                    return Response({'status': 'error', 'message': 'کاربر وارد نشده است'}, status=status.HTTP_400_BAD_REQUEST)
-                UserActivity.objects.create(
-                    user_id=user_id,
-                    action='online',
-                    details={'duration': request.data.get('duration', 0)}
-                )
-                return Response({'status': 'success'})
+class CurrentUserView(APIView):
+    def get(self, request):
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'status': 'error', 'message': 'کاربر وارد نشده است'}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.get(id=user_id)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
 
-            if not username or not password:
-                logger.error("Username or password missing")
-                return Response({'status': 'error', 'message': 'نام کاربری و رمز عبور الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
+    def patch(self, request):
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'status': 'error', 'message': 'کاربر وارد نشده است'}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.get(id=user_id)
+        data = request.data.copy()
+        if 'profile_image' in request.FILES:
+            data['profile_image'] = request.FILES['profile_image']
+        if 'password' in data and data['password']:
+            data['password'] = make_password(data['password'])
+        serializer = UserSerializer(user, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response({'status': 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-            user, created = User.objects.get_or_create(
-                username=username,
-                defaults={'password': make_password(password)}
-            )
+class LogoutView(APIView):
+    def post(self, request):
+        user_id = request.session.get('user_id')
+        if user_id:
+            user = User.objects.get(id=user_id)
+            user.is_online = False
+            user.save()
+        request.session.flush()
+        return Response({'status': 'success'})
 
-            if not created and not check_password(password, user.password):
-                logger.error(f"Invalid password for user {username}")
-                return Response({'status': 'error', 'message': 'رمز عبور اشتباه است'}, status=status.HTTP_400_BAD_REQUEST)
-
-            request.session['user_id'] = user.id
-            UserActivity.objects.create(user=user, action='login')
-            logger.info(f"User {username} logged in successfully")
-            return Response({'status': 'success', 'user_id': user.id})
-        except Exception as e:
-            logger.error(f"Error in user login: {str(e)}")
-            return Response({'status': 'error', 'message': 'خطا در ورود'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+class ChattedUsersView(APIView):
+    def get(self, request):
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'status': 'error', 'message': 'کاربر وارد نشده است'}, status=status.HTTP_400_BAD_REQUEST)
+        messages = Message.objects.filter(
+            models.Q(sender_id=user_id) | models.Q(recipient_id=user_id)
+        ).exclude(group__isnull=False)
+        user_ids = set()
+        for msg in messages:
+            if msg.sender_id != user_id:
+                user_ids.add(msg.sender_id)
+            if msg.recipient_id != user_id:
+                user_ids.add(msg.recipient_id)
+        users = User.objects.filter(id__in=user_ids)
+        serializer = UserSerializer(users, many=True)
+        return Response({'users': serializer.data})
 
 class FileUploadView(APIView):
     parser_classes = [MultiPartParser]
 
     def post(self, request):
-        try:
-            files = request.FILES.getlist('files')
-            if not files:
-                logger.error("No files provided in upload request")
-                return Response({'status': 'error', 'message': 'هیچ فایلی انتخاب نشده است'}, status=status.HTTP_400_BAD_REQUEST)
-
-            file_urls = []
-            for file in files:
-                if file.content_type.startswith('image'):
-                    img = Image.open(file)
-                    img = img.convert('RGB')
-                    output = io.BytesIO()
-                    img.save(output, format='JPEG', quality=85)
-                    output.seek(0)
-                    file_name = f"compressed_{file.name}"
-                    compressed_file = ContentFile(output.read(), name=file_name)
-                    file_obj = File.objects.create(file=compressed_file, file_type='image')
-                else:
-                    file_type = 'video' if file.content_type.startswith('video') else 'audio' if file.content_type.startswith('audio') else 'other'
-                    file_obj = File.objects.create(file=file, file_type=file_type)
-                file_urls.append({'id': file_obj.id, 'file': file_obj.file.url, 'file_type': file_obj.file_type})
-            
-            logger.info(f"Files uploaded successfully: {len(file_urls)} files")
-            return Response({'status': 'success', 'file_urls': file_urls})
-        except Exception as e:
-            logger.error(f"Error in file upload: {str(e)}")
-            return Response({'status': 'error', 'message': f'خطا در آپلود فایل: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        files = request.FILES.getlist('files')
+        if not files:
+            return Response({'status': 'error', 'message': 'هیچ فایلی انتخاب نشده است'}, status=status.HTTP_400_BAD_REQUEST)
+        file_urls = []
+        for file in files:
+            file_type = 'image' if file.content_type.startswith('image') else 'other'
+            file_obj = File.objects.create(file=file, file_type=file_type)
+            file_urls.append({'id': file_obj.id, 'file': file_obj.file.url, 'file_type': file_obj.file_type})
+        return Response({'status': 'success', 'file_urls': file_urls})
 
 class MessageList(APIView):
     def get(self, request):
-        try:
-            group_id = request.GET.get('group_id')
-            recipient_id = request.GET.get('recipient_id')
-            messages = Message.objects.all()
-
-            if group_id:
-                messages = messages.filter(group_id=group_id)
-            elif recipient_id:
-                messages = messages.filter(sender_id=recipient_id) | messages.filter(recipient_id=recipient_id)
-
-            message_data = [
-                {
-                    'id': msg.id,
-                    'sender': {'id': msg.sender.id, 'username': msg.sender.username} if msg.sender else None,
-                    'content': msg.content,
-                    'timestamp': msg.timestamp.isoformat() if msg.timestamp else None,
-                    'group': {'id': msg.group.id, 'name': msg.group.name} if msg.group else None,
-                    'recipient': {'id': msg.recipient.id, 'username': msg.recipient.username} if msg.recipient else None,
-                    'files': [{'id': f.id, 'file': f.file.url, 'file_type': f.file_type} for f in msg.files.all()],
-                    'delivered_at': msg.delivered_at.isoformat() if msg.delivered_at else None,
-                    'read_at': msg.read_at.isoformat() if msg.read_at else None
-                } for msg in messages
-            ]
-            return Response(message_data)
-        except Exception as e:
-            logger.error(f"Error fetching messages: {str(e)}")
-            return Response({'status': 'error', 'message': 'خطا در دریافت پیام‌ها'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        group_id = request.GET.get('group_id')
+        recipient_id = request.GET.get('recipient_id')
+        last_message_id = request.GET.get('last_message_id', 0)
+        messages = Message.objects.filter(id__gt=last_message_id)
+        if group_id:
+            messages = messages.filter(group_id=group_id)
+        elif recipient_id:
+            user_id = request.session.get('user_id')
+            messages = messages.filter(
+                models.Q(sender_id=user_id, recipient_id=recipient_id) |
+                models.Q(sender_id=recipient_id, recipient_id=user_id)
+            )
+        serializer = MessageSerializer(messages, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
-        try:
-            content = request.data.get('content')
-            sender_id = request.data.get('sender_id')
-            group_id = request.data.get('group_id')
-            recipient_id = request.data.get('recipient_id')
-            file_urls = request.data.get('file_urls', [])
-
-            if not sender_id:
-                logger.error("Sender ID missing")
-                return Response({'status': 'error', 'message': 'شناسه فرستنده الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
-
-            message = Message.objects.create(
-                sender_id=sender_id,
-                content=content,
-                group_id=group_id,
-                recipient_id=recipient_id
-            )
-
+        data = request.data.copy()
+        data['sender_id'] = request.session.get('user_id')
+        file_urls = data.pop('file_urls', [])
+        serializer = MessageSerializer(data=data)
+        if serializer.is_valid():
+            message = serializer.save()
             for file_data in file_urls:
                 file_obj = File.objects.get(id=file_data['id'])
                 message.files.add(file_obj)
-
-            logger.info(f"Message created by user {sender_id}")
             return Response({'status': 'success', 'message_id': message.id})
-        except Exception as e:
-            logger.error(f"Error creating message: {str(e)}")
-            return Response({'status': 'error', 'message': 'خطا در ارسال پیام'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'status': 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 class GroupList(APIView):
     def get(self, request):
-        try:
-            groups = Group.objects.all()
-            group_data = [
-                {
-                    'id': group.id,
-                    'name': group.name,
-                    'members': [{'id': m.id, 'username': m.username} for m in group.members.all()]
-                } for group in groups
-            ]
-            return Response(group_data)
-        except Exception as e:
-            logger.error(f"Error fetching groups: {str(e)}")
-            return Response({'status': 'error', 'message': 'خطا در دریافت گروه‌ها'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'status': 'error', 'message': 'کاربر وارد نشده است'}, status=status.HTTP_400_BAD_REQUEST)
+        groups = Group.objects.filter(members__id=user_id)
+        serializer = GroupSerializer(groups, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
-        try:
-            name = request.data.get('name')
-            description = request.data.get('description', '')
-            creator_id = request.data.get('creator_id')
-            member_ids = request.data.get('member_ids', [])
-
-            if not name or not creator_id:
-                logger.error("Group name or creator ID missing")
-                return Response({'status': 'error', 'message': 'نام گروه و شناسه سازنده الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
-
-            group = Group.objects.create(
-                name=name,
-                description=description,
-                creator_id=creator_id
-            )
-            group.members.add(*member_ids, creator_id)
-            logger.info(f"Group {name} created by user {creator_id}")
+        data = request.data.copy()
+        data['creator_id'] = request.session.get('user_id')
+        if 'image' in request.FILES:
+            data['image'] = request.FILES['image']
+        serializer = GroupSerializer(data=data)
+        if serializer.is_valid():
+            group = serializer.save()
+            user = User.objects.get(id=data['creator_id'])
+            group.members.add(user)
             return Response({'status': 'success', 'group_id': group.id})
-        except Exception as e:
-            logger.error(f"Error creating group: {str(e)}")
-            return Response({'status': 'error', 'message': 'خطا در ایجاد گروه'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'status': 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-class StatsView(APIView):
+class GroupJoinView(APIView):
+    def post(self, request):
+        group_id = request.data.get('group_id')
+        password = request.data.get('password', '')
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'status': 'error', 'message': 'کاربر وارد نشده است'}, status=status.HTTP_400_BAD_REQUEST)
+        group = get_object_or_404(Group, id=group_id)
+        if group.password and not check_password(password, group.password):
+            return Response({'status': 'error', 'message': 'رمز عبور گروه اشتباه است'}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.get(id=user_id)
+        if user in group.members.all():
+            return Response({'status': 'error', 'message': 'شما قبلاً عضو این گروه هستید'}, status=status.HTTP_400_BAD_REQUEST)
+        group.members.add(user)
+        return Response({'status': 'success', 'group_id': group.id})
+
+class GroupSearchView(APIView):
     def get(self, request):
-        try:
-            user_id = request.session.get('user_id')
-            if not user_id:
-                logger.error("No user_id in session for stats")
-                return Response({'status': 'error', 'message': 'کاربر وارد نشده است'}, status=status.HTTP_400_BAD_REQUEST)
-
-            message_count = Message.objects.filter(sender_id=user_id).count()
-            file_count = File.objects.filter(message__sender_id=user_id).count()
-            login_count = UserActivity.objects.filter(user_id=user_id, action='login').count()
-            online_time = sum(
-                activity.details.get('duration', 0)
-                for activity in UserActivity.objects.filter(user_id=user_id, action='online')
-            )
-
-            return Response({
-                'message_count': message_count,
-                'file_count': file_count,
-                'login_count': login_count,
-                'online_time': online_time
-            })
-        except Exception as e:
-            logger.error(f"Error fetching stats: {str(e)}")
-            return Response({'status': 'error', 'message': 'خطا در دریافت آمار'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        search_query = request.GET.get('search', '')
+        groups = Group.objects.all()
+        if search_query:
+            groups = groups.filter(models.Q(name__icontains=search_query) | models.Q(id__exact=search_query))
+        serializer = GroupSerializer(groups, many=True)
+        return Response({'groups': serializer.data})
