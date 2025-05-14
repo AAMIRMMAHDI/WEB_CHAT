@@ -6,27 +6,19 @@
     <title>چت</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://v1.fontapi.ir/css/Vazir">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
             font-family: 'Vazir', sans-serif;
         }
         body {
-            background: #f0f2f5;
-            color: #1c2526;
+            background: #1a1a1a;
+            color: #e0e0e0;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
             height: 100vh;
         }
-        #auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #0088cc, #00c4b4);
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a, #6b21a8);
             animation: gradient 15s ease infinite;
         }
         @keyframes gradient {
@@ -34,322 +26,31 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        .auth-box {
-            background: #fff;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            transform: translateY(0);
-            transition: transform 0.3s ease;
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .auth-box:hover {
-            transform: translateY(-5px);
-        }
-        .auth-box h2 {
-            margin-bottom: 1.5rem;
-            color: #0088cc;
-            font-weight: 700;
-        }
-        .auth-box input {
-            width: 100%;
-            padding: 0.9rem;
-            margin: 0.6rem 0;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1rem;
-            background: #f9f9f9;
-            transition: border-color 0.3s;
-        }
-        .auth-box input:focus {
-            border-color: #0088cc;
-            outline: none;
-        }
-        .auth-box button {
-            width: 100%;
-            padding: 0.9rem;
-            background: #0088cc;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
-        }
-        .auth-box button:hover {
-            background: #00c4b4;
-            transform: scale(1.02);
-        }
-        #chat-container {
-            display: none;
-            flex: 1;
-            overflow: hidden;
-            background: #fff;
-        }
-        #chat-sidebar {
-            width: 320px;
-            background: #f7f9fc;
-            border-left: 1px solid #e0e0e0;
-            overflow-y: auto;
-            flex-shrink: 0;
-            transition: transform 0.3s ease;
-        }
-        .sidebar-header {
-            padding: 1rem;
-            background: linear-gradient(90deg, #0088cc, #00c4b4);
-            color: #fff;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .sidebar-header h2 {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-        .search-bar {
-            padding: 1rem;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .search-bar input {
-            width: 100%;
-            padding: 0.7rem;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            background: #fff;
-            transition: border-color 0.3s;
-        }
-        .search-bar input:focus {
-            border-color: #0088cc;
-            outline: none;
-        }
-        .accordion {
-            padding: 0.8rem 1rem;
-            background: #f7f9fc;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e0e0e0;
-            transition: background 0.3s;
-        }
-        .accordion:hover {
-            background: #e6f0fa;
-        }
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        .accordion-content.active {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .group-item, .user-item, .search-group-item {
-            padding: 0.8rem 1rem;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid #e0e0e0;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .group-item:hover, .user-item:hover, .search-group-item:hover {
-            background: #e6f0fa;
-        }
-        .group-avatar, .user-avatar {
-            width: 45px;
-            height: 45px;
-            background: #0088cc;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            margin-left: 0.7rem;
-            font-size: 1.3rem;
-        }
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: auto;
-            border: 2px solid #fff;
-        }
-        .status-online { background: #00c4b4; }
-        .status-offline { background: #dc3545; }
-        #chat-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #e6f0fa;
-        }
-        .chat-header {
-            padding: 1rem;
-            background: linear-gradient(90deg, #0088cc, #00c4b4);
-            color: #fff;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .chat-header h2 {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-        .chat-messages {
-            flex: 1;
-            padding: 1rem;
-            overflow-y: auto;
-            background: #fff;
-        }
-        .message {
-            margin-bottom: 1rem;
-            max-width: 70%;
-            animation: slideIn 0.3s ease;
-        }
-        @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .message-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: #666;
-            margin-bottom: 0.4rem;
-        }
-        .message-content {
-            background: #e6f0fa;
-            padding: 0.8rem 1rem;
+        .message-bubble {
+            background: #2d2d2d;
             border-radius: 15px 15px 15px 0;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            font-size: 0.95rem;
-            line-height: 1.4;
+            transition: transform 0.2s ease;
         }
-        .message-system {
-            text-align: center;
-            color: #666;
-            font-size: 0.85rem;
-            margin: 1rem 0;
-            background: #f0f2f5;
-            padding: 0.5rem;
-            border-radius: 10px;
+        .message-bubble:hover {
+            transform: translateY(-2px);
         }
-        .chat-input {
-            padding: 1rem;
-            border-top: 1px solid #e0e0e0;
-            display: flex;
-            align-items: center;
-            background: #fff;
-        }
-        #message-input {
-            flex: 1;
-            padding: 0.8rem 1rem;
-            border: 1px solid #e0e0e0;
-            border-radius: 25px;
-            margin-left: 0.7rem;
-            font-size: 0.95rem;
-            resize: none;
-            background: #f9f9f9;
-            transition: border-color 0.3s;
-        }
-        #message-input:focus {
-            border-color: #0088cc;
-            outline: none;
-        }
-        .chat-input button {
-            background: #0088cc;
-            color: #fff;
-            border: none;
-            padding: 0.8rem;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
-        }
-        .chat-input button:hover {
-            background: #00c4b4;
-            transform: scale(1.1);
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+        .sidebar-item:hover {
+            background: #3b3b3b;
+            transform: translateX(5px);
         }
         .modal-content {
-            background: #fff;
-            padding: 2rem;
-            border-radius: 15px;
-            width: 100%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             transform: translateY(0);
             transition: transform 0.3s ease;
         }
         .modal-content:hover {
             transform: translateY(-5px);
         }
-        .modal-content input,
-        .modal-content select,
-        .modal-content textarea {
-            width: 100%;
-            padding: 0.9rem;
-            margin: 0.6rem 0;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            background: #f9f9f9;
-            transition: border-color 0.3s;
-        }
-        .modal-content input:focus,
-        .modal-content textarea:focus {
-            border-color: #0088cc;
-            outline: none;
-        }
-        .modal-content button {
-            padding: 0.9rem 1.5rem;
-            background: #0088cc;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
-        }
-        .modal-content button:hover {
-            background: #00c4b4;
-            transform: scale(1.02);
-        }
-        .close-btn {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.3rem;
-            cursor: pointer;
-            color: #666;
-        }
-        .close-btn:hover {
-            color: #0088cc;
-        }
         .notification {
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            background: #333;
-            color: #fff;
-            padding: 0.8rem 1.5rem;
-            border-radius: 10px;
-            z-index: 1001;
             animation: fadeInOut 3s ease;
         }
         @keyframes fadeInOut {
@@ -358,160 +59,146 @@
             90% { opacity: 1; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(-20px); }
         }
-        .btn {
-            background: #0088cc;
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.2rem;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
-        }
-        .btn:hover {
-            background: #00c4b4;
-            transform: scale(1.02);
-        }
-        #profile-image {
-            display: none;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 1rem auto;
-            object-fit: cover;
-        }
-        #profile-avatar {
-            width: 120px;
-            height: 120px;
-            background: #0088cc;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            margin: 1rem auto;
-            font-size: 2.5rem;
+        #chat-sidebar {
+            transition: transform 0.3s ease;
         }
         @media (max-width: 768px) {
             #chat-sidebar {
-                width: 100%;
                 position: fixed;
-                right: -100%;
                 top: 0;
+                right: -100%;
+                width: 100%;
                 height: 100%;
-                z-index: 999;
-                transition: right 0.3s ease;
+                z-index: 1000;
             }
             #chat-sidebar.active {
                 right: 0;
             }
-            .chat-header {
-                padding: 0.8rem;
+            .modal-content {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+                margin: 0;
             }
-            .chat-header h2 {
-                font-size: 1rem;
+            .chat-input textarea {
+                max-height: 100px;
             }
-            .message-content {
-                font-size: 0.9rem;
-                padding: 0.7rem 1rem;
+            .chat-messages {
+                padding-bottom: 80px;
             }
         }
     </style>
 </head>
-<body>
-    <div id="auth-container">
-        <div class="auth-box">
-            <h2>ورود به چت</h2>
-            <input type="text" id="username" placeholder="نام کاربری">
-            <input type="text" id="display_name" placeholder="نام نمایشی (اختیاری)">
-            <input type="password" id="password" placeholder="رمز عبور">
-            <button id="login-btn">ورود</button>
+<body class="flex flex-col h-screen">
+    <div id="auth-container" class="flex items-center justify-center h-screen gradient-bg">
+        <div class="glass-effect p-6 rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md transform transition-all duration-300 hover:scale-105">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-white mb-6">ورود به چت</h2>
+            <input id="username" type="text" placeholder="نام کاربری" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm sm:text-base">
+            <input id="display_name" type="text" placeholder="نام نمایشی (اختیاری)" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm sm:text-base">
+            <input id="password" type="password" placeholder="رمز عبور" class="w-full p-3 mb-6 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm sm:text-base">
+            <button id="login-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 text-sm sm:text-base">ورود</button>
         </div>
     </div>
-    <div id="chat-container">
-        <div id="chat-sidebar">
-            <div class="sidebar-header">
-                <h2>چت‌ها</h2>
-                <button id="theme-toggle" title="تغییر تم"><i class="fas fa-moon"></i></button>
+    <div id="chat-container" class="hidden flex-1 flex overflow-hidden">
+        <div id="chat-sidebar" class="w-full sm:w-80 bg-gray-900 p-4 flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg sm:text-xl font-bold text-white">چت‌ها</h2>
+                <button id="close-sidebar" class="sm:hidden text-gray-300 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
-            <div class="search-bar">
-                <input type="text" id="search-users" placeholder="جستجوی کاربران...">
-                <input type="text" id="search-groups" placeholder="جستجوی گروه‌ها...">
+            <div class="space-y-2">
+                <input id="search-users" type="text" placeholder="جستجوی کاربران..." class="w-full p-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+                <input id="search-groups" type="text" placeholder="جستجوی گروه‌ها..." class="w-full p-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
             </div>
-            <div class="accordion" id="groups-accordion">
-                <span>گروه‌ها</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="accordion-content" id="groups-content">
-                <div id="groups-list"></div>
-            </div>
-            <div class="accordion" id="profiles-accordion">
-                <span>پروف‌ها</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="accordion-content" id="profiles-content">
-                <div id="profiles-list"></div>
-            </div>
-            <div class="accordion" id="search-groups-accordion">
-                <span>نتایج جستجوی گروه‌ها</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="accordion-content" id="search-groups-content">
-                <div id="search-groups-list"></div>
-            </div>
-            <div style="padding: 1rem;">
-                <button id="create-group-btn" class="btn"><i class="fas fa-plus"></i> ایجاد گروه</button>
-                <button id="join-group-btn" class="btn"><i class="fas fa-sign-in-alt"></i> پیوستن به گروه</button>
-                <button id="profile-btn" class="btn"><i class="fas fa-user"></i> پروفایل</button>
-            </div>
-        </div>
-        <div id="chat-main">
-            <div class="chat-header">
-                <h2 id="current-chat">چت گروهی</h2>
-                <div>
-                    <button id="emoji-btn" title="اموجی"><i class="fas fa-smile"></i></button>
-                    <button onclick="document.getElementById('file-input').click()" title="ارسال فایل"><i class="fas fa-paperclip"></i></button>
-                    <input type="file" id="file-input" multiple style="display: none;">
+            <div class="flex-1 overflow-y-auto space-y-2">
+                <div class="accordion flex justify-between items-center p-2 rounded-lg cursor-pointer hover:bg-gray-800" id="groups-accordion">
+                    <span>گروه‌ها</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="accordion-content" id="groups-content">
+                    <div id="groups-list" class="space-y-2"></div>
+                </div>
+                <div class="accordion flex justify-between items-center p-2 rounded-lg cursor-pointer hover:bg-gray-800" id="profiles-accordion">
+                    <span>پروف‌ها</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="accordion-content" id="profiles-content">
+                    <div id="profiles-list" class="space-y-2"></div>
+                </div>
+                <div class="accordion flex justify-between items-center p-2 rounded-lg cursor-pointer hover:bg-gray-800" id="search-groups-accordion">
+                    <span>نتایج جستجوی گروه‌ها</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="accordion-content" id="search-groups-content">
+                    <div id="search-groups-list" class="space-y-2"></div>
                 </div>
             </div>
-            <div class="chat-messages" id="chat-messages"></div>
-            <div class="chat-input">
-                <textarea id="message-input" placeholder="پیام خود را بنویسید..."></textarea>
-                <button id="send-btn" title="ارسال پیام"><i class="fas fa-paper-plane"></i></button>
+            <div class="space-y-2">
+                <button id="create-group-btn" class="w-full p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"><i class="fas fa-plus"></i> ایجاد گروه</button>
+                <button id="join-group-btn" class="w-full p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"><i class="fas fa-sign-in-alt"></i> پیوستن به گروه</button>
+                <button id="profile-btn" class="w-full p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"><i class="fas fa-user"></i> پروفایل</button>
+            </div>
+        </div>
+        <div id="chat-main" class="flex-1 flex flex-col bg-gray-800 rounded-lg sm:m-4 sm:shadow-2xl">
+            <div class="chat-header flex justify-between items-center p-4 bg-gray-900 glass-effect rounded-t-lg">
+                <div class="flex items-center gap-2">
+                    <button id="open-sidebar" class="sm:hidden text-gray-300 hover:text-white"><i class="fas fa-bars"></i></button>
+                    <h2 id="current-chat" class="text-lg sm:text-xl font-bold text-white">چت گروهی</h2>
+                </div>
+                <div class="relative group">
+                    <button id="menu-btn" class="text-gray-300 hover:text-white"><i class="fas fa-ellipsis-v"></i></button>
+                    <div id="header-menu" class="hidden absolute top-10 right-0 w-48 p-4 bg-gray-900 rounded-lg shadow-xl z-50 group-hover:block">
+                        <button id="online-users-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded"><i class="fas fa-users"></i> کاربران آنلاین</button>
+                        <button id="groups-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded"><i class="fas fa-users-cog"></i> گروه‌ها</button>
+                        <button id="profile-header-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded"><i class="fas fa-user-circle"></i> پروفایل</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-messages flex-1 p-4 overflow-y-auto bg-gray-800">
+                <div id="chat-messages"></div>
+            </div>
+            <div class="chat-input p-4 bg-gray-900 glass-effect flex items-center gap-2 rounded-b-lg">
+                <textarea id="message-input" placeholder="پیام خود را بنویسید..." class="flex-1 p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 resize-none text-sm"></textarea>
+                <div class="flex gap-2">
+                    <button id="emoji-btn" title="اموجی" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700"><i class="fas fa-smile"></i></button>
+                    <button onclick="document.getElementById('file-input').click()" title="ارسال فایل" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700"><i class="fas fa-paperclip"></i></button>
+                    <input type="file" id="file-input" multiple style="display: none;">
+                    <button id="send-btn" title="ارسال پیام" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700"><i class="fas fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
     </div>
-    <div id="group-modal" class="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeGroupModal()"><i class="fas fa-times"></i></button>
-            <h2>ایجاد گروه</h2>
-            <input type="text" id="group-name" placeholder="نام گروه">
-            <textarea id="group-description" placeholder="توضیحات گروه"></textarea>
-            <input type="password" id="group-password" placeholder="رمز عبور (اختیاری)">
-            <input type="file" id="group-image-input" accept="image/*">
-            <button id="save-group-btn">ایجاد گروه</button>
+    <div id="group-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
+            <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeGroupModal()"><i class="fas fa-times"></i></button>
+            <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">ایجاد گروه</h2>
+            <input id="group-name" type="text" placeholder="نام گروه" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+            <textarea id="group-description" placeholder="توضیحات گروه" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm"></textarea>
+            <input id="group-password" type="password" placeholder="رمز عبور (اختیاری)" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+            <input id="group-image-input" type="file" accept="image/*" class="w-full p-3 mb-6 rounded-lg bg-gray-800 text-white border border-gray-700 text-sm">
+            <button id="save-group-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">ایجاد گروه</button>
         </div>
     </div>
-    <div id="join-group-modal" class="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeJoinGroupModal()"><i class="fas fa-times"></i></button>
-            <h2>پیوستن به گروه</h2>
-            <input type="text" id="join-group-id" placeholder="شناسه گروه">
-            <input type="password" id="join-group-password" placeholder="رمز عبور (اگر دارد)">
-            <button id="join-group-btn-modal">پیوستن</button>
+    <div id="join-group-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
+            <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeJoinGroupModal()"><i class="fas fa-times"></i></button>
+            <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">پیوستن به گروه</h2>
+            <input id="join-group-id" type="text" placeholder="شناسه گروه" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+            <input id="join-group-password" type="password" placeholder="رمز عبور (اگر دارد)" class="w-full p-3 mb-6 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+            <button id="join-group-btn-modal" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">پیوستن</button>
         </div>
     </div>
-    <div id="profile-modal" class="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeProfileModal()"><i class="fas fa-times"></i></button>
-            <h2>پروفایل</h2>
-            <div id="profile-avatar"></div>
-            <img id="profile-image" alt="تصویر پروفایل">
-            <input type="file" id="profile-image-input" accept="image/*">
-            <input type="text" id="profile-username" placeholder="نام کاربری">
-            <input type="text" id="profile-display-name" placeholder="نام نمایشی">
-            <input type="password" id="profile-password" placeholder="رمز عبور جدید (اختیاری)">
-            <button id="save-profile-btn">ذخیره</button>
-            <button id="logout-btn" style="background: #dc3545;">خروج</button>
+    <div id="profile-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
+            <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeProfileModal()"><i class="fas fa-times"></i></button>
+            <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">پروفایل</h2>
+            <div id="profile-avatar" class="w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 text-white flex items-center justify-center rounded-full mx-auto mb-4 text-2xl sm:text-4xl"></div>
+            <img id="profile-image" alt="تصویر پروفایل" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto mb-4 hidden">
+            <input id="profile-image-input" type="file" accept="image/*" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 text-sm">
+            <input id="profile-username" type="text" placeholder="نام کاربری" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+            <input id="profile-display-name" type="text" placeholder="نام نمایشی" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+            <input id="profile-password" type="password" placeholder="رمز عبور جدید (اختیاری)" class="w-full p-3 mb-6 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
+            <button id="save-profile-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">ذخیره</button>
+            <button id="logout-btn" class="w-full p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 mt-2 text-sm">خروج</button>
         </div>
     </div>
     <script>
@@ -538,6 +225,10 @@
             const saveProfileBtn = document.getElementById('save-profile-btn');
             const logoutBtn = document.getElementById('logout-btn');
             const profileImageInput = document.getElementById('profile-image-input');
+            const openSidebarBtn = document.getElementById('open-sidebar');
+            const closeSidebarBtn = document.getElementById('close-sidebar');
+            const menuBtn = document.getElementById('menu-btn');
+            const headerMenu = document.getElementById('header-menu');
 
             loginBtn.addEventListener('click', enterChat);
             sendBtn.addEventListener('click', sendMessage);
@@ -552,6 +243,33 @@
             saveProfileBtn.addEventListener('click', saveProfile);
             logoutBtn.addEventListener('click', logout);
             profileImageInput.addEventListener('change', handleProfileImageSelect);
+
+            openSidebarBtn.addEventListener('click', () => {
+                document.getElementById('chat-sidebar').classList.add('active');
+            });
+
+            closeSidebarBtn.addEventListener('click', () => {
+                document.getElementById('chat-sidebar').classList.remove('active');
+            });
+
+            menuBtn.addEventListener('click', () => {
+                headerMenu.classList.toggle('hidden');
+            });
+
+            document.getElementById('online-users-btn').addEventListener('click', () => {
+                fetchUsers();
+                headerMenu.classList.add('hidden');
+            });
+
+            document.getElementById('groups-btn').addEventListener('click', () => {
+                fetchGroups();
+                headerMenu.classList.add('hidden');
+            });
+
+            document.getElementById('profile-header-btn').addEventListener('click', () => {
+                showProfile();
+                headerMenu.classList.add('hidden');
+            });
 
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -638,7 +356,7 @@
 
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = 'notification';
+            notification.className = 'notification fixed top-4 left-4 bg-gray-900 text-white p-4 rounded-lg shadow-xl z-[1001]';
             notification.textContent = message;
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 3000);
@@ -730,11 +448,13 @@
                     groupsList.innerHTML = '';
                     groups.forEach(group => {
                         const groupElement = document.createElement('div');
-                        groupElement.className = 'group-item';
-                        const avatarContent = group.image ? `<img src="${group.image}" style="width: 100%; height: 100%; border-radius: 50%;" />` : group.name.charAt(0);
+                        groupElement.className = 'sidebar-item p-2 rounded-lg cursor-pointer transition-all duration-200';
+                        const avatarContent = group.image ? `<img src="${group.image}" class="w-full h-full rounded-full" />` : group.name.charAt(0);
                         groupElement.innerHTML = `
-                            <div class="group-avatar">${avatarContent}</div>
-                            <div>${group.name}</div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 text-white flex items-center justify-center rounded-full">${avatarContent}</div>
+                                <div class="text-white text-sm sm:text-base">${group.name}</div>
+                            </div>
                         `;
                         groupElement.onclick = () => startGroupChat(group.id, group.name);
                         groupsList.appendChild(groupElement);
@@ -756,12 +476,16 @@
                     searchGroupsList.innerHTML = '';
                     data.groups.forEach(group => {
                         const groupElement = document.createElement('div');
-                        groupElement.className = 'search-group-item';
-                        const avatarContent = group.image ? `<img src="${group.image}" style="width: 100%; height: 100%; border-radius: 50%;" />` : group.name.charAt(0);
+                        groupElement.className = 'sidebar-item p-2 rounded-lg cursor-pointer transition-all duration-200';
+                        const avatarContent = group.image ? `<img src="${group.image}" class="w-full h-full rounded-full" />` : group.name.charAt(0);
                         groupElement.innerHTML = `
-                            <div class="group-avatar">${avatarContent}</div>
-                            <div>${group.name} (ID: ${group.id})</div>
-                            <button class="btn" onclick="joinGroupFromSearch(${group.id}, '${group.name}')">پیوستن</button>
+                            <div class="flex items-center gap-3 justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 text-white flex items-center justify-center rounded-full">${avatarContent}</div>
+                                    <div class="text-white text-sm sm:text-base">${group.name} (ID: ${group.id})</div>
+                                </div>
+                                <button class="p-1 sm:p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs sm:text-sm" onclick="joinGroupFromSearch(${group.id}, '${group.name}')">پیوستن</button>
+                            </div>
                         `;
                         searchGroupsList.appendChild(groupElement);
                     });
@@ -785,12 +509,16 @@
                     profilesList.innerHTML = '';
                     data.users.forEach(user => {
                         const userElement = document.createElement('div');
-                        userElement.className = 'user-item';
-                        const avatarContent = user.profile_image ? `<img src="${user.profile_image}" style="width: 100%; height: 100%; border-radius: 50%;" />` : (user.display_name || user.username).charAt(0);
+                        userElement.className = 'sidebar-item p-2 rounded-lg cursor-pointer transition-all duration-200';
+                        const avatarContent = user.profile_image ? `<img src="${user.profile_image}" class="w-full h-full rounded-full" />` : (user.display_name || user.username).charAt(0);
                         userElement.innerHTML = `
-                            <div class="user-avatar">${avatarContent}</div>
-                            <div>${user.display_name || user.username}</div>
-                            <span class="status-indicator ${user.is_online ? 'status-online' : 'status-offline'}"></span>
+                            <div class="flex items-center gap-3 justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 text-white flex items-center justify-center rounded-full">${avatarContent}</div>
+                                    <div class="text-white text-sm sm:text-base">${user.display_name || user.username}</div>
+                                </div>
+                                <span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full ${user.is_online ? 'bg-green-500' : 'bg-red-500'}"></span>
+                            </div>
                         `;
                         userElement.onclick = () => startPrivateChat(user.id, user.display_name || user.username);
                         profilesList.appendChild(userElement);
@@ -803,16 +531,20 @@
 
         function updateUsersList(users) {
             const profilesList = document.getElementById('profiles-list');
-            profilesList.innerHTML = '';
+            profileslify.innerHTML = '';
             users.forEach(user => {
                 if (user.id !== currentUserId) {
                     const userElement = document.createElement('div');
-                    userElement.className = 'user-item';
-                    const avatarContent = user.profile_image ? `<img src="${user.profile_image}" style="width: 100%; height: 100%; border-radius: 50%;" />` : (user.display_name || user.username).charAt(0);
+                    userElement.className = 'sidebar-item p-2 rounded-lg cursor-pointer transition-all duration-200';
+                    const avatarContent = user.profile_image ? `<img src="${user.profile_image}" class="w-full h-full rounded-full" />` : (user.display_name || user.username).charAt(0);
                     userElement.innerHTML = `
-                        <div class="user-avatar">${avatarContent}</div>
-                        <div>${user.display_name || user.username}</div>
-                        <span class="status-indicator ${user.is_online ? 'status-online' : 'status-offline'}"></span>
+                        <div class="flex items-center gap-3 justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 text-white flex items-center justify-center rounded-full">${avatarContent}</div>
+                                <div class="text-white text-sm sm:text-base">${user.display_name || user.username}</div>
+                            </div>
+                            <span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full ${user.is_online ? 'bg-green-500' : 'bg-red-500'}"></span>
+                        </div>
                     `;
                     userElement.onclick = () => startPrivateChat(user.id, user.display_name || user.username);
                     profilesList.appendChild(userElement);
@@ -824,23 +556,23 @@
             if (!message.sender) return;
             const messagesContainer = document.getElementById('chat-messages');
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'message';
+            messageDiv.className = 'message mb-4 max-w-[80%] sm:max-w-[70%]';
             const time = new Date(message.timestamp);
             const timeStr = time.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
             messageDiv.innerHTML = `
-                <div class="message-header">
+                <div class="flex justify-between text-xs sm:text-sm text-gray-400 mb-1">
                     <span class="message-username">${message.sender.display_name || message.sender.username}</span>
                     <span class="message-time">${timeStr}</span>
                 </div>
-                <div class="message-content">${message.content}</div>
+                <div class="message-bubble p-3 text-white shadow-md text-sm sm:text-base">${message.content}</div>
             `;
             if (message.files && message.files.length > 0) {
                 message.files.forEach(file => {
                     const fileElement = document.createElement('div');
                     if (file.file_type === 'image') {
-                        fileElement.innerHTML = `<img src="${file.file}" style="max-width: 180px; margin-top: 0.4rem;" />`;
+                        fileElement.innerHTML = `<img src="${file.file}" class="max-w-32 sm:max-w-48 mt-2 rounded-lg" />`;
                     } else {
-                        fileElement.innerHTML = `<a href="${file.file}" target="_blank">دانلود فایل</a>`;
+                        fileElement.innerHTML = `<a href="${file.file}" target="_blank" class="text-indigo-400 hover:underline text-xs sm:text-sm">دانلود فایل</a>`;
                     }
                     messageDiv.appendChild(fileElement);
                 });
@@ -980,7 +712,7 @@
             currentPrivateUserId = userId;
             currentGroupId = null;
             document.getElementById('current-chat').textContent = `چت با ${username}`;
-            document.getElementById('chat-messages').innerHTML = `<div class="message-system">چت خصوصی با ${username}</div>`;
+            document.getElementById('chat-messages').innerHTML = `<div class="text-center text-gray-400 p-4 rounded-lg bg-gray-900 text-sm sm:text-base">چت خصوصی با ${username}</div>`;
             lastMessageId = 0;
             fetchMessages();
         }
@@ -990,7 +722,7 @@
             currentGroupId = groupId;
             currentPrivateUserId = null;
             document.getElementById('current-chat').textContent = `گروه ${groupName}`;
-            document.getElementById('chat-messages').innerHTML = `<div class="message-system">چت گروهی: ${groupName}</div>`;
+            document.getElementById('chat-messages').innerHTML = `<div class="text-center text-gray-400 p-4 rounded-lg bg-gray-900 text-sm sm:text-base">چت گروهی: ${groupName}</div>`;
             lastMessageId = 0;
             fetchMessages();
         }
