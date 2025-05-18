@@ -7,7 +7,7 @@ SECRET_KEY = 'your-secret-key-here'  # جایگزین با یک کلید امن
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*']  # برای تولید محدود کنید
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -77,6 +77,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024 * 1024  # 20 گیگابایت
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024 * 1024  # 20 گیگابایت
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

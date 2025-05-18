@@ -3,20 +3,18 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, serializers
+from rest_framework import status
 from .models import User, Group, Message, File
 from .serializers import UserSerializer, GroupSerializer, MessageSerializer, FileSerializer
-import json
 import os
 from django.conf import settings
 from django.core.files.storage import default_storage
 import django.db.models as models
-
+from django.utils import timezone
 
 def index(request):
     """Render the main index page."""
     return render(request, 'index.html')
-
 
 class UserView(APIView):
     def post(self, request):
@@ -42,7 +40,8 @@ class UserView(APIView):
                     'status': 'success',
                     'user_id': user.id,
                     'username': user.username,
-                    'display_name': user.display_name
+                    'display_name': user.display_name,
+                    'profile_image': user.profile_image.url if user.profile_image else None
                 })
             else:
                 return Response(
@@ -59,16 +58,23 @@ class UserView(APIView):
             'status': 'success',
             'user_id': user.id,
             'username': user.username,
-            'display_name': user.display_name
+            'display_name': user.display_name,
+            'profile_image': user.profile_image.url if user.profile_image else None
         })
 
     def get(self, request):
         """Retrieve users, optionally filtered by search query."""
         query = request.GET.get('search', '')
-        users = User.objects.filter(username__icontains=query) if query else User.objects.all()
+        users = User.objects.filter(username__icontains=query).exclude(id=request.session.get('user_id'))
         serializer = UserSerializer(users, many=True)
         return Response({'users': serializer.data})
 
+class UserDetailView(APIView):
+    def get(self, request, pk):
+        """Retrieve a specific user's details."""
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
 
 class UserCurrentView(APIView):
     def get(self, request):
@@ -84,7 +90,7 @@ class UserCurrentView(APIView):
         return Response(serializer.data)
 
     def patch(self, request):
-        """Update the current user's profile, including username, display name, password, or profile image."""
+        """Update the current user's profile."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -116,9 +122,9 @@ class UserCurrentView(APIView):
         return Response({
             'status': 'success',
             'username': user.username,
-            'display_name': user.display_name
+            'display_name': user.display_name,
+            'profile_image': user.profile_image.url if user.profile_image else None
         })
-
 
 class UserChattedView(APIView):
     def get(self, request):
@@ -144,7 +150,6 @@ class UserChattedView(APIView):
         users = User.objects.filter(id__in=user_ids)
         serializer = UserSerializer(users, many=True)
         return Response({'users': serializer.data})
-
 
 class GroupView(APIView):
     def get(self, request):
@@ -173,7 +178,7 @@ class GroupView(APIView):
         name = data.get('name')
         description = data.get('description', '')
         password = data.get('password', '')
-        image = request.FILES.get('image')  # Handle file upload correctly
+        image = request.FILES.get('image')
 
         if not name:
             return Response(
@@ -188,7 +193,6 @@ class GroupView(APIView):
         group.members.add(user_id)
         return Response({'status': 'success', 'group_id': group.id})
 
-
 class GroupSearchView(APIView):
     def get(self, request):
         """Search for groups by name."""
@@ -197,16 +201,9 @@ class GroupSearchView(APIView):
         serializer = GroupSerializer(groups, many=True)
         return Response({'groups': serializer.data})
 
-
-class GroupJoinSerializer(serializers.Serializer):
-    """Serializer for validating group join requests."""
-    group_id = serializers.IntegerField()
-    password = serializers.CharField(required=False, allow_blank=True)
-
-
 class GroupJoinView(APIView):
     def post(self, request):
-        """Handle joining a group with validation."""
+        """Handle joining a group."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -214,15 +211,8 @@ class GroupJoinView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        serializer = GroupJoinSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {'status': 'error', 'message': serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        group_id = serializer.validated_data['group_id']
-        password = serializer.validated_data.get('password', '')
+        group_id = request.data.get('group_id')
+        password = request.data.get('password', '')
 
         group = get_object_or_404(Group, id=group_id)
         if group.password and not group.check_password(password):
@@ -240,10 +230,9 @@ class GroupJoinView(APIView):
         group.members.add(user_id)
         return Response({'status': 'success', 'group_id': group.id})
 
-
 class MessageView(APIView):
     def get(self, request):
-        """Retrieve messages for the current user, optionally filtered by group or recipient."""
+        """Retrieve messages for the current user."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -263,7 +252,7 @@ class MessageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        messages = Message.objects.filter(id__gt=last_message_id)
+        messages = Message.objects.filter(id__gt=last_message_id).order_by('timestamp')
 
         if group_id:
             try:
@@ -314,15 +303,15 @@ class MessageView(APIView):
         content = data.get('content', '').strip()
         group_id = data.get('group_id')
         recipient_id = data.get('recipient_id')
-        file_urls = data.get('file_urls', [])
+        file_ids = data.get('file_ids', [])
 
-        if not content and not file_urls:
+        if not content and not file_ids:
             return Response(
                 {'status': 'error', 'message': 'محتوا یا فایل الزامی است'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        message = Message(sender_id=user_id, content=content)
+        message_data = {'sender_id': user_id, 'content': content}
         if group_id:
             try:
                 group_id = int(group_id)
@@ -331,7 +320,7 @@ class MessageView(APIView):
                         {'status': 'error', 'message': 'شما عضو این گروه نیستید'},
                         status=status.HTTP_403_FORBIDDEN
                     )
-                message.group_id = group_id
+                message_data['group_id'] = group_id
             except ValueError:
                 return Response(
                     {'status': 'error', 'message': 'شناسه گروه نامعتبر است'},
@@ -345,21 +334,24 @@ class MessageView(APIView):
                         {'status': 'error', 'message': 'گیرنده وجود ندارد'},
                         status=status.HTTP_404_NOT_FOUND
                     )
-                message.recipient_id = recipient_id
+                message_data['recipient_id'] = recipient_id
             except ValueError:
                 return Response(
                     {'status': 'error', 'message': 'شناسه گیرنده نامعتبر است'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        message.save()
-
-        for file_url in file_urls:
-            File.objects.create(file=file_url['file'], file_type=file_url['file_type'], message=message)
+        message = Message.objects.create(**message_data, delivered_at=timezone.now())
+        for file_id in file_ids:
+            file_obj = get_object_or_404(File, id=file_id)
+            file_obj.message = message
+            file_obj.save()
+        if recipient_id:
+            message.read_at = timezone.now()
+            message.save()
 
         serializer = MessageSerializer(message)
-        return Response({'status': 'success', 'message_id': message.id, 'message': serializer.data})
-
+        return Response({'status': 'success', 'message_id': serializer.data['id'], 'message': serializer.data})
 
 class MessageDetailView(APIView):
     def patch(self, request, pk):
@@ -410,7 +402,6 @@ class MessageDetailView(APIView):
         message.delete()
         return Response({'status': 'success'})
 
-
 class UploadView(APIView):
     def post(self, request):
         """Handle file uploads."""
@@ -428,11 +419,24 @@ class UploadView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        file_urls = []
+        max_size = 20 * 1024 * 1024 * 1024  # 20 گیگابایت
+        file_ids = []
         for file in files:
+            if file.size > max_size:
+                return Response(
+                    {'status': 'error', 'message': f'فایل {file.name} بیش از 20 گیگابایت است'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             file_path = os.path.join('uploads', file.name)
-            default_storage.save(file_path, file)
-            file_url = default_storage.url(file_path)
+            try:
+                saved_path = default_storage.save(file_path, file)
+                file_url = default_storage.url(saved_path)
+            except Exception as e:
+                return Response(
+                    {'status': 'error', 'message': f'خطا در ذخیره فایل {file.name}: {str(e)}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
             file_type = 'other'
             if file.content_type.startswith('image'):
@@ -442,11 +446,67 @@ class UploadView(APIView):
             elif file.content_type.startswith('audio'):
                 file_type = 'audio'
 
-            file_obj = File.objects.create(file=file_url, file_type=file_type)
-            file_urls.append({'file': file_url, 'file_type': file_type})
+            file_obj = File.objects.create(file=saved_path, file_type=file_type)
+            file_ids.append(file_obj.id)
 
-        return Response({'status': 'success', 'file_urls': file_urls})
+        return Response({'status': 'success', 'file_ids': file_ids})
 
+class MessageSeenView(APIView):
+    def post(self, request):
+        """Mark messages as delivered or read."""
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response(
+                {'status': 'error', 'message': 'کاربر وارد نشده است'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        recipient_id = request.data.get('recipient_id')
+        group_id = request.data.get('group_id')
+
+        if recipient_id:
+            try:
+                recipient_id = int(recipient_id)
+                messages = Message.objects.filter(
+                    recipient_id=user_id, sender_id=recipient_id, read_at__isnull=True
+                )
+                for message in messages:
+                    if not message.delivered_at:
+                        message.delivered_at = timezone.now()
+                    message.read_at = timezone.now()
+                    message.save()
+                return Response({'status': 'success'})
+            except ValueError:
+                return Response(
+                    {'status': 'error', 'message': 'شناسه گیرنده نامعتبر است'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        elif group_id:
+            try:
+                group_id = int(group_id)
+                if not Group.objects.filter(id=group_id, members__id=user_id).exists():
+                    return Response(
+                        {'status': 'error', 'message': 'شما عضو این گروه نیستید'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                messages = Message.objects.filter(
+                    group_id=group_id, read_at__isnull=True
+                ).exclude(sender_id=user_id)
+                for message in messages:
+                    if not message.delivered_at:
+                        message.delivered_at = timezone.now()
+                    message.read_at = timezone.now()
+                    message.save()
+                return Response({'status': 'success'})
+            except ValueError:
+                return Response(
+                    {'status': 'error', 'message': 'شناسه گروه نامعتبر است'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        return Response(
+            {'status': 'error', 'message': 'شناسه گیرنده یا گروه الزامی است'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 class LogoutView(APIView):
     def post(self, request):

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="csrf-token" content="{% csrf_token %}">
     <title>چت</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://v1.fontapi.ir/css/Vazir">
@@ -13,784 +14,623 @@
         * {
             font-family: 'Vazir', sans-serif;
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         body {
             background: #1a1a1a;
             color: #e0e0e0;
+            overflow-x: hidden;
             height: 100vh;
-            margin: 0;
-            overflow: auto;
+            display: flex;
+            flex-direction: row;
         }
         .gradient-bg {
-            background: linear-gradient(135deg, #1e3a8a, #6b21a8);
-            animation: gradient 15s ease infinite;
+            background: linear-gradient(135deg, #1e3a8a, #1e1e2f);
             min-height: 100vh;
-        }
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            width: 100%;
+            display: flex;
+            flex-direction: row;
         }
         .glass-effect {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
         }
         .message {
-            max-width: 80%;
+            max-width: 70%;
             word-break: break-word;
             overflow-wrap: break-word;
             direction: rtl;
+            margin: 0.75rem 0;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeSlideIn 0.3s ease forwards;
         }
-        @media (min-width: 640px) {
-            .message {
-                max-width: 70%;
+        @keyframes fadeSlideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
         .message-bubble {
-            background: #2d2d2d;
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 0.8rem 1.2rem;
+            position: relative;
+            min-width: 120px;
+            max-width: 100%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .message-bubble.sent {
+            background: #d1e7dd;
+            border-radius: 15px 15px 0 15px;
+            color: #000;
+        }
+        .message-bubble.received {
+            background: #ffffff;
             border-radius: 15px 15px 15px 0;
-            padding: 0.75rem;
-            transition: transform 0.2s ease;
-            white-space: pre-wrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            color: #000;
         }
         .message-bubble:hover {
             transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
         }
-        .sidebar-item:hover {
-            background: #3b3b3b;
-            transform: translateX(5px);
+        .message-bubble p.message-content {
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 0.3rem;
         }
-        .modal-content {
-            transform: translateY(0);
-            transition: transform 0.3s ease;
+        .message-ticks {
+            position: absolute;
+            bottom: 0.3rem;
+            left: 0.6rem;
+            font-size: 0.7rem;
+            color: #34b7f1;
         }
-        .modal-content:hover {
-            transform: translateY(-5px);
+        .message-ticks.delivered::before {
+            content: '✓';
         }
-        .notification {
-            animation: fadeInOut 3s ease;
+        .message-ticks.read::before {
+            content: '✓✓';
         }
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(-20px); }
-            10% { opacity: 1; transform: translateY(0); }
-            90% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-20px); }
+        .message-bubble p.text-xs {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 0.3rem;
+            text-align: left;
         }
         #chat-sidebar {
+            width: 320px;
+            background: rgba(31, 41, 55, 0.95);
+            height: 100vh;
             transition: transform 0.3s ease;
+            position: relative;
+            z-index: 20;
         }
-        .accordion-content {
-            display: none;
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0;
+            overflow: hidden;
+            max-height: 100vh;
         }
-        .accordion-content.active {
-            display: block;
-        }
-        .accordion i {
-            transition: transform 0.3s ease;
-        }
-        .accordion.active i {
-            transform: rotate(180deg);
-        }
-        #header-menu {
-            transform-origin: top right;
-        }
-        #header-menu:not(.hidden) {
-            transform: scale(1);
-        }
-        .context-menu {
-            position: absolute;
-            background: linear-gradient(135deg, #4b0082, #8b008b);
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            padding: 0.5rem 0;
-            min-width: 120px;
-            animation: slideIn 0.2s ease;
-        }
-        .context-menu button {
-            display: block;
-            width: 100%;
-            padding: 0.5rem 1rem;
-            text-align: right;
-            color: #fff;
-            background: none;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-        .context-menu button:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        @keyframes slideIn {
-            from { transform: translateY(-10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .anime-video-player {
-            border-radius: 10px;
-            border: 2px solid #ff69b4;
-            box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            max-width: 100%;
-        }
-        .anime-video-player:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(255, 105, 180, 0.7);
-        }
-        .anime-video-player::-webkit-media-controls-panel {
-            background: linear-gradient(135deg, #4b0082, #ff69b4);
-            border-radius: 8px;
-        }
-        .anime-video-player::-webkit-media-controls-play-button,
-        .anime-video-player::-webkit-media-controls-volume-slider,
-        .anime-video-player::-webkit-media-controls-timeline {
-            filter: brightness(1.2);
-        }
-        audio {
-            border-radius: 8px;
-            background: linear-gradient(135deg, #4b0082, #ff69b4);
-            padding: 0.5rem;
-            width: 100%;
-            max-width: 180px;
-        }
-        audio::-webkit-media-controls-panel {
-            background: transparent;
-        }
-        /* استایل‌های جدید برای پروفایل */
-        .profile-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        .stat-box {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 0.75rem;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        .stat-box h3 {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            color: #fff;
-        }
-        .profile-list {
-            max-height: 150px;
+        #chat-messages {
+            flex: 1;
             overflow-y: auto;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 0.5rem;
-            margin-bottom: 1rem;
+            padding: 1rem;
+            max-height: calc(100vh - 160px);
         }
-        .profile-list-item {
-            padding: 0.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 0.85rem;
-            color: #e0e0e0;
+        #message-input {
+            padding: 0.8rem;
+            font-size: 1rem;
+            border-radius: 15px;
+            background: #2d3748;
         }
-        .profile-list-item:last-child {
-            border-bottom: none;
-        }
-        /* استایل برای آیکون‌های دانلود و وب‌سایت */
-        .app-icons {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .app-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 50px;
-            height: 50px;
+        #file-upload, #send-message {
+            padding: 0.8rem;
+            font-size: 1.2rem;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: transform 0.3s ease, background 0.3s ease;
         }
-        .app-icon:hover {
-            transform: scale(1.1);
-            background: rgba(255, 255, 255, 0.2);
-        }
-        /* استایل‌های جدید برای مودال دانلود */
         .glass-button {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #fff;
-            padding: 0.75rem;
-            width: 100%;
-            border-radius: 8px;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
             cursor: pointer;
-            transition: background 0.3s ease, transform 0.2s ease;
-            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
         }
         .glass-button:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
         }
-        .download-modal-content {
-            background: rgba(255, 255, 255, 0.05);
+        .modal-content, .download-modal-content, .profile-modal-content {
+            background: rgba(31, 41, 55, 0.95);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 1.5rem;
-            width: 100%;
-            max-width: 300px;
-            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .modal-content.show, .download-modal-content.show, .profile-modal-content.show {
             transform: translateY(0);
-            transition: transform 0.3s ease;
+            opacity: 1;
         }
-        .download-modal-content:hover {
-            transform: translateY(-5px);
+        .download-icons {
+            display: flex;
+            gap: 0.5rem;
         }
-        @media (max-width: 768px) {
+        .download-icon {
+            font-size: 1.5rem;
+            color: #fff;
+            padding: 0.6rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .download-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        @media (max-width: 640px) {
             body {
-                overflow-y: auto;
-            }
-            #auth-container {
-                padding: 1rem;
-                height: auto;
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            #auth-container .glass-effect {
-                width: 100%;
-                max-width: 90vw;
-                padding: 1.5rem;
-                margin: 0 auto;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-            }
-            #auth-container input,
-            #auth-container button {
-                font-size: 0.9rem;
-                padding: 0.75rem;
+                flex-direction: column;
             }
             #chat-sidebar {
+                width: 100%;
+                max-width: 300px;
                 position: fixed;
                 top: 0;
-                right: -100%;
-                width: 80vw;
-                height: 100%;
-                z-index: 1000;
-                overflow-y: auto;
-                background: #1a1a1a;
-            }
-            #chat-sidebar.active {
                 right: 0;
+                transform: translateX(100%);
             }
-            .modal {
-                padding: 0;
+            #chat-sidebar:not(.translate-x-full) {
+                transform: translateX(0);
             }
-            .modal-content {
-                width: 100%;
-                height: 100%;
-                max-height: 100vh;
-                border-radius: 0;
-                margin: 0;
-                padding: 1rem;
-                overflow-y: auto;
-                box-sizing: border-box;
+            .chat-window {
+                margin: 5px;
+                max-height: calc(100vh - 10px);
+                border-radius: 10px;
             }
-            .modal-content .close-btn {
-                top: 0.5rem;
-                left: 0.5rem;
-                font-size: 1.2rem;
-            }
-            .modal-content h2 {
-                font-size: 1.25rem;
-                margin-bottom: 1rem;
-            }
-            .modal-content input,
-            .modal-content textarea,
-            .modal-content button {
-                font-size: 0.85rem;
-                padding: 0.5rem;
-            }
-            .chat-input textarea {
-                max-height: 80px;
-                font-size: 0.85rem;
-            }
-            .chat-input button {
-                padding: 0.5rem;
-                font-size: 0.9rem;
-            }
-            .chat-messages {
-                padding-bottom: 60px;
-            }
-            #header-menu {
-                width: 90%;
-                max-width: 240px;
-                right: 0.5rem;
-                top: 2.5rem;
-                font-size: 0.85rem;
-            }
-            .context-menu {
-                min-width: 100px;
-                font-size: 0.8rem;
-                padding: 0.25rem 0;
-            }
-            .context-menu button {
-                padding: 0.4rem 0.8rem;
+            #chat-messages {
+                padding: 0.6rem;
+                max-height: calc(100vh - 120px);
             }
             .message {
                 max-width: 85%;
+                margin: 0.3rem 0.2rem;
             }
             .message-bubble {
-                padding: 0.5rem;
+                padding: 0.5rem 0.8rem;
+                border-radius: 12px;
+                min-width: 80px;
+            }
+            .message-bubble p.message-content {
                 font-size: 0.85rem;
+                line-height: 1.5;
             }
-            .chat-header {
-                padding: 0.75rem;
+            .message-bubble p.text-xs {
+                font-size: 0.6rem;
             }
-            #current-chat {
+            #message-input {
+                padding: 0.6rem;
+                font-size: 0.85rem;
+                border-radius: 12px;
+            }
+            #file-upload, #send-message {
+                padding: 0.6rem;
                 font-size: 1rem;
             }
-            .sidebar-item {
-                padding: 0.5rem;
+            .modal-content, .download-modal-content, .profile-modal-content {
+                width: 95%;
+                max-width: 340px;
+                padding: 0.8rem;
+                max-height: 85vh;
+                border-radius: 10px;
             }
-            .sidebar-item .text-sm {
-                font-size: 0.8rem;
-            }
-            #groups-list,
-            #profiles-list,
-            #search-groups-list {
-                padding: 0.5rem;
-            }
-            #create-group-btn,
-            #join-group-btn,
-            #profile-btn {
-                font-size: 0.85rem;
-                padding: 0.5rem;
-            }
-            .anime-video-player,
-            img[src$=".jpg"],
-            img[src$=".png"] {
-                max-width: 80%;
-            }
-            audio {
-                max-width: 160px;
-            }
-            /* استایل‌های پروفایل در موبایل */
-            .profile-stats {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-            }
-            .stat-box {
-                font-size: 0.8rem;
-                padding: 0.5rem;
-            }
-            .stat-box h3 {
+            .glass-button {
+                padding: 0.6rem 1rem;
                 font-size: 0.9rem;
+                border-radius: 10px;
             }
-            .profile-list {
-                max-height: 120px;
-                font-size: 0.8rem;
+            .download-icons {
+                gap: 0.3rem;
             }
-            .profile-list-item {
+            .download-icon {
+                font-size: 1.2rem;
                 padding: 0.4rem;
             }
-            /* استایل آیکون‌های دانلود در موبایل */
-            .app-icons {
-                gap: 1rem;
-                margin-bottom: 1rem;
-            }
-            .app-icon {
-                width: 40px;
-                height: 40px;
-            }
-            .app-icon i {
-                font-size: 1.75rem !important;
-            }
-            /* استایل مودال دانلود در موبایل */
-            .download-modal-content {
-                max-width: 90vw;
-                padding: 1rem;
-            }
-            .glass-button {
-                font-size: 0.85rem;
-                padding: 0.5rem;
-            }
-        }
-        @media (max-width: 375px) {
-            #auth-container .glass-effect {
-                padding: 1rem;
-                max-width: 95vw;
-            }
-            #auth-container input,
-            #auth-container button {
-                font-size: 0.8rem;
+            header {
                 padding: 0.6rem;
-            }
-            .modal-content input,
-            .modal-content textarea,
-            .modal-content button {
-                font-size: 0.8rem;
-                padding: 0.4rem;
-            }
-            .chat-input textarea {
-                max-height: 60px;
-            }
-            .chat-input button {
-                padding: 0.4rem;
-            }
-            #header-menu {
-                max-width: 200px;
-            }
-            .context-menu {
-                min-width: 90px;
-                font-size: 0.75rem;
-            }
-            .profile-stats {
-                gap: 0.5rem;
-            }
-            .stat-box {
-                font-size: 0.75rem;
-            }
-            .stat-box h3 {
-                font-size: 0.85rem;
-            }
-            /* استایل آیکون‌های دانلود در موبایل کوچک */
-            .app-icon {
-                width: 36px;
-                height: 36px;
-            }
-            .app-icon i {
-                font-size: 1.5rem !important;
-            }
-            /* استایل مودال دانلود در موبایل کوچک */
-            .download-modal-content {
-                padding: 0.75rem;
-            }
-            .glass-button {
-                font-size: 0.8rem;
-                padding: 0.4rem;
+                border-radius: 10px 10px 0 0;
             }
         }
     </style>
 </head>
-<body class="flex flex-col h-screen">
-    <div id="auth-container" class="flex flex-col items-center justify-center h-screen gradient-bg">
-        <!-- آیکون‌های دانلود و وب‌سایت -->
-        <div class="app-icons flex justify-center gap-4 sm:gap-6 mb-6">
-            <a href="https://drive.usercontent.google.com/download?id=1zbLMneVS0kIqnLFcWJn3DbGhWDqssZ8U&export=download&authuser=0&confirm=t&uuid=eb39865d-666b-486a-a612-ce25426e7fb7&at=ALoNOgkCClkb8bCr14hbTONh7SlY:1747381406634" download title="دانلود اپلیکیشن اندروید" class="app-icon">
-                <i class="fab fa-android text-3xl sm:text-4xl text-white hover:text-green-400 transition-all duration-200"></i>
-            </a>
-            <a id="windows-download-btn" title="دانلود اپلیکیشن ویندوز" class="app-icon" href="#">
-                <i class="fab fa-windows text-3xl sm:text-4xl text-white hover:text-blue-400 transition-all duration-200"></i>
-            </a>
-            <a href="https://web-chat-mbai.onrender.com/" target="_blank" title="باز کردن وب‌سایت" class="app-icon">
-                <i class="fas fa-globe text-3xl sm:text-4xl text-white hover:text-purple-400 transition-all duration-200"></i>
-            </a>
-        </div>
-        <!-- فرم ورود -->
-        <div class="glass-effect p-6 rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md transform transition-all duration-300 hover:scale-105">
-            <h2 class="text-2xl sm:text-3xl font-bold text-center text-white mb-6">ورود به چت</h2>
-            <input id="username" type="text" placeholder="نام کاربری" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm sm:text-base">
-            <input id="display_name" type="text" placeholder="نام نمایشی (اختیاری)" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm sm:text-base">
-            <input id="password" type="password" placeholder="رمز عبور" class="w-full p-3 mb-6 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm sm:text-base">
-            <button id="login-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 text-sm sm:text-base">ورود</button>
-        </div>
-    </div>
-    <!-- مودال دانلود -->
-    <div id="download-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1001]">
-        <div class="download-modal-content glass-effect">
-            <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeDownloadModal()"><i class="fas fa-times"></i></button>
-            <h2 class="text-xl font-bold text-white mb-6">دانلود اپلیکیشن ویندوز</h2>
-            <button class="glass-button" onclick="downloadPart('https://drive.usercontent.google.com/download?id=1LpmxFPBHQOnVZ0Xfvp5WtZ9B7qMOUMZp&export=download&authuser=0&confirm=t&uuid=95c607de-c841-4261-a5ce-0b483b1ec1b5&at=ALoNOgltADA53SKCbjpkTRgvdQhk:1747376255290')">دانلود نسخه ویندوز</button>
-
-        </div>
-    </div>
-    <div id="chat-container" class="hidden flex-1 flex overflow-hidden">
-        <div id="chat-sidebar" class="w-full sm:w-80 bg-gray-900 p-4 flex flex-col gap-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg sm:text-xl font-bold text-white">چت‌ها</h2>
-                <button id="close-sidebar" class="sm:hidden text-gray-300 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="space-y-2">
-                <input id="search-users" type="text" placeholder="جستجوی کاربران..." class="w-full p-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-                <input id="search-groups" type="text" placeholder="جستجوی گروه‌ها..." class="w-full p-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-            </div>
-            <div class="flex-1 overflow-y-auto space-y-2">
-                <div class="accordion flex justify-between items-center p-2 rounded-lg cursor-pointer hover:bg-gray-800" id="groups-accordion">
-                    <span>گروه‌ها</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="accordion-content" id="groups-content">
-                    <div id="groups-list" class="space-y-2"></div>
-                </div>
-                <div class="accordion flex justify-between items-center p-2 rounded-lg cursor-pointer hover:bg-gray-800" id="profiles-accordion">
-                    <span>پروف‌ها</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="accordion-content" id="profiles-content">
-                    <div id="profiles-list" class="space-y-2"></div>
-                </div>
-                <div class="accordion flex justify-between items-center p-2 rounded-lg cursor-pointer hover:bg-gray-800" id="search-groups-accordion">
-                    <span>نتایج جستجوی گروه‌ها</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="accordion-content" id="search-groups-content">
-                    <div id="search-groups-list" class="space-y-2"></div>
-                </div>
-            </div>
-            <div class="space-y-2">
-                <button id="create-group-btn" class="w-full p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"><i class="fas fa-plus"></i> ایجاد گروه</button>
-                <button id="join-group-btn" class="w-full p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"><i class="fas fa-sign-in-alt"></i> پیوستن به گروه</button>
-                <button id="profile-btn" class="w-full p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"><i class="fas fa-user"></i> پروفایل</button>
-            </div>
-        </div>
-        <div id="chat-main" class="flex-1 flex flex-col bg-gray-800 rounded-lg sm:m-4 sm:shadow-2xl">
-            <div class="chat-header flex justify-between items-center p-4 bg-gray-900 glass-effect rounded-t-lg">
-                <div class="flex items-center gap-2">
-                    <button id="open-sidebar" class="sm:hidden text-gray-300 hover:text-white"><i class="fas fa-bars"></i></button>
-                    <h2 id="current-chat" class="text-lg sm:text-xl font-bold text-white">چت گروهی</h2>
-                </div>
-                <div class="relative">
-                    <button id="menu-btn" class="text-gray-300 hover:text-white"><i class="fas fa-ellipsis-v"></i></button>
-                    <div id="header-menu" class="hidden absolute top-12 right-0 w-56 sm:w-64 p-4 bg-gray-900 rounded-lg shadow-xl z-[1000] transform transition-all duration-200 origin-top-right scale-0">
-                        <button id="online-users-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded text-sm sm:text-base"><i class="fas fa-users"></i> کاربران آنلاین</button>
-                        <button id="groups-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded text-sm sm:text-base"><i class="fas fa-users-cog"></i> گروه‌ها</button>
-                        <button id="profile-header-btn" class="block w-full text-right p-2 text-white hover:bg-gray-800 rounded text-sm sm:text-base"><i class="fas fa-user-circle"></i> پروفایل</button>
+<body class="gradient-bg">
+    <div id="chat-sidebar" class="glass-effect">
+        <div class="p-3 border-b border-gray-700">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3 space-x-reverse">
+                    <img id="profile-image" src="{% get_media_prefix %}profiles/ICON_PROF.jpg" alt="Profile" class="w-10 h-10 rounded-full object-cover cursor-pointer">
+                    <div>
+                        <h2 id="display-name" class="font-bold text-base text-white">کاربر</h2>
+                        <p id="username" class="text-sm text-gray-400"></p>
                     </div>
                 </div>
-            </div>
-            <div class="chat-messages flex-1 p-4 overflow-y-auto bg-gray-800">
-                <div id="chat-messages"></div>
-            </div>
-            <div class="chat-input p-4 bg-gray-900 glass-effect flex items-center gap-2 rounded-b-lg">
-                <textarea id="message-input" placeholder="پیام خود را بنویسید..." class="flex-1 p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 resize-none text-sm"></textarea>
-                <div class="flex gap-2">
-                    <button id="emoji-btn" title="اموجی" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700"><i class="fas fa-smile"></i></button>
-                    <button onclick="document.getElementById('file-input').click()" title="ارسال فایل" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700"><i class="fas fa-paperclip"></i></button>
-                    <input type="file" id="file-input" multiple style="display: none;">
-                    <button id="send-btn" title="ارسال پیام" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700"><i class="fas fa-paper-plane"></i></button>
-                </div>
+                <button id="sidebar-toggle" class="sm:hidden text-white">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
-    </div>
-    <div id="group-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1001]">
-        <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
-            <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeGroupModal()"><i class="fas fa-times"></i></button>
-            <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">ایجاد گروه</h2>
-            <input id="group-name" type="text" placeholder="نام گروه" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-            <textarea id="group-description" placeholder="توضیحات گروه" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm"></textarea>
-            <input id="group-password" type="password" placeholder="رمز عبور (اختیاری)" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-            <input id="group-image-input" type="file" accept="image/*" class="w-full p-3 mb-6 rounded-lg bg-gray-800 text-white border border-gray-700 text-sm">
-            <button id="save-group-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">ایجاد گروه</button>
+        <div class="p-3">
+            <div class="relative">
+                <input id="search-input" type="text" placeholder="جستجو..." class="w-full p-2 pr-10 rounded-lg bg-gray-800 text-white focus:outline-none">
+                <i class="fas fa-search absolute right-3 top-2.5 text-gray-400"></i>
+            </div>
+        </div>
+        <div class="flex border-b border-gray-700">
+            <button id="private-tab" class="flex-1 p-2 text-center font-semibold text-purple-400 border-b-2 border-purple-400">خصوصی</button>
+            <button id="group-tab" class="flex-1 p-2 text-center font-semibold text-gray-400 border-b-2 border-transparent">گروه</button>
+        </div>
+        <div id="sidebar-content" class="overflow-y-auto p-2" style="max-height: calc(100vh - 180px);">
+            <div id="private-chats"></div>
+            <div id="groups" class="hidden"></div>
         </div>
     </div>
-    <div id="join-group-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1001]">
-        <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
-            <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeJoinGroupModal()"><i class="fas fa-times"></i></button>
-            <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">پیوستن به گروه</h2>
-            <input id="join-group-id" type="text" placeholder="شناسه گروه" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-            <input id="join-group-password" type="password" placeholder="رمز عبور (اگر دارد)" class="w-full p-3 mb-6 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-            <button id="join-group-btn-modal" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">پیوستن</button>
-        </div>
-    </div>
-    <div id="profile-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1002]">
-        <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
-            <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeProfileModal()"><i class="fas fa-times"></i></button>
-            <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">پروفایل</h2>
-            <div id="profile-avatar" class="w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 text-white flex items-center justify-center rounded-full mx-auto mb-4 text-2xl sm:text-4xl"></div>
-            <img id="profile-image" alt="تصویر پروفایل" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto mb-4 hidden">
-            <input id="profile-image-input" type="file" accept="image/*" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 text-sm">
-            <input id="profile-username" type="text" placeholder="نام کاربری" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-            <input id="profile-display-name" type="text" placeholder="نام نمایشی" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-            <input id="profile-password" type="password" placeholder="رمز عبور جدید (اختیاری)" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm">
-            <!-- بخش‌های جدید برای آمار پروفایل -->
-            <div class="profile-stats">
-                <div class="stat-box">
-                    <h3>پیام‌های ارسالی</h3>
-                    <p id="profile-messages-count">0</p>
+    <div class="chat-window">
+        <header class="bg-gray-900 glass-effect p-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <button id="sidebar-open" class="sm:hidden text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <img id="chat-image" src="{% get_media_prefix %}profiles/ICON_PROF.jpg" alt="Chat Image" class="w-8 h-8 rounded-full object-cover cursor-pointer">
+                <h1 id="chat-title" class="text-lg font-bold text-white">چت</h1>
+            </div>
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <div class="download-icons">
+                    <a href="https://web-chat-mbai.onrender.com/" class="download-icon" title="دانلود نسخه وب"><i class="fas fa-globe"></i></a>
+                    <a href="https://download1531.mediafire.com/bboaigymkbigKYI3Q1YF6tMyGH1GTwWNPD-Ol9uq_BgZBZn4uP2cbqKjHNoF_gFIbAY36mrRrHrcF2kVqU6FXIP4irA8GflSAh9f2HWJUnmWQhgD7t7HIcncke2W9Eg8_gtkHmiD9GtQsK0eJDnyuEIRr2MzrzQIBpndkg5FnZOM/kuwthv9istlo4nw/app.apk" class="download-icon" title="دانلود نسخه اندروید"><i class="fab fa-android"></i></a>
+                    <a href="https://download856.mediafire.com/jijj9a1j8xxgifk2bhngutZU2yeElIEbITkng6Sl4WTd8Ret2pi_4ILxMF2Q0toinPHFXA1Pxg7SUOpVvgJWnLNaqJsKWVt2uLhQf8n6A8_HNhC6Eaw-hp5_2epPPLVayRPlnDcILn4NJ2FdQn0NAaqnPVowWKyEB3ydewdTmkwd/x221n3bupveqzwc/Setup_C_CHAT.exe" class="download-icon" title="دانلود نسخه ویندوز"><i class="fab fa-windows"></i></a>
                 </div>
-                <div class="stat-box">
-                    <h3>زمان آنلاین</h3>
-                    <p id="profile-online-time">0 ساعت</p>
-                </div>
-                <div class="stat-box">
-                    <h3>فایل‌های ارسالی</h3>
-                    <p id="profile-files-count">0</p>
-                </div>
-                <div class="stat-box">
-                    <h3>امتیاز</h3>
-                    <p id="profile-score">0</p>
+                <button id="header-menu-toggle" class="text-white">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div id="header-menu" class="hidden absolute left-2 top-12 bg-gray-800 rounded-lg shadow-lg p-2 z-10">
+                    <button id="create-group" class="block w-full text-right p-2 hover:bg-gray-700 rounded">ایجاد گروه</button>
+                    <button id="join-group" class="block w-full text-right p-2 hover:bg-gray-700 rounded">پیوستن به گروه</button>
+                    <button id="logout" class="block w-full text-right p-2 hover:bg-gray-700 rounded">خروج</button>
                 </div>
             </div>
-            <!-- لیست پیام‌های اخیر -->
-            <h3 class="text-lg font-bold text-white mb-2">پیام‌های اخیر</h3>
-            <div id="profile-messages-list" class="profile-list"></div>
-            <!-- لیست فایل‌های ارسالی -->
-            <h3 class="text-lg font-bold text-white mb-2">فایل‌های ارسالی</h3>
-            <div id="profile-files-list" class="profile-list"></div>
-            <button id="save-profile-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">ذخیره</button>
-            <button id="logout-btn" class="w-full p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 mt-2 text-sm">خروج</button>
+        </header>
+        <div id="chat-messages" class="space-y-2"></div>
+        <div class="p-3 bg-gray-900 glass-effect">
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <input id="message-input" type="text" placeholder="پیام خود را بنویسید..." class="flex-1 p-2 rounded-lg bg-gray-800 text-white focus:outline-none">
+                <input id="file-input" type="file" multiple accept="image/*,video/*,audio/*" class="hidden">
+                <button id="file-upload" class="text-white p-2 hover:bg-gray-700 rounded-full">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <button id="send-message" class="text-white p-2 hover:bg-gray-700 rounded-full">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
     </div>
-    <div id="edit-message-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1002]">
-        <div class="modal-content glass-effect p-6 rounded-2xl w-full max-w-sm sm:max-w-md">
-            <button class="close-btn absolute top-4 left-4 text-gray-300 hover:text-white text-lg" onclick="closeEditMessageModal()"><i class="fas fa-times"></i></button>
-            <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">ویرایش پیام</h2>
-            <textarea id="edit-message-input" class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm"></textarea>
-            <button id="save-edit-message-btn" class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">ذخیره</button>
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-3 text-white">ورود / ثبت‌نام</h2>
+            <input id="login-username" type="text" placeholder="نام کاربری" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <input id="login-display-name" type="text" placeholder="نام نمایشی (اختیاری)" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <input id="login-password" type="password" placeholder="رمز عبور" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <button id="login-submit" class="glass-button">ارسال</button>
         </div>
     </div>
+    <div id="edit-profile-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-3 text-white">ویرایش پروفایل</h2>
+            <input id="edit-username" type="text" placeholder="نام کاربری جدید" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <input id="edit-display-name" type="text" placeholder="نام نمایشی جدید" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <input id="edit-password" type="password" placeholder="رمز عبور جدید (اختیاری)" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <input id="edit-profile-image" type="file" accept="image/*" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white">
+            <textarea id="edit-description" placeholder="توضیحات (اختیاری)" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none"></textarea>
+            <button id="edit-profile-submit" class="glass-button">ذخیره</button>
+            <button id="edit-profile-cancel" class="glass-button bg-red-600 hover:bg-red-700">لغو</button>
+        </div>
+    </div>
+    <div id="create-group-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-3 text-white">ایجاد گروه</h2>
+            <input id="group-name" type="text" placeholder="نام گروه" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <textarea id="group-description" placeholder="توضیحات گروه (اختیاری)" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none"></textarea>
+            <input id="group-password" type="password" placeholder="رمز عبور گروه (اختیاری)" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <input id="group-image" type="file" accept="image/*" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white">
+            <button id="create-group-submit" class="glass-button">ایجاد</button>
+            <button id="create-group-cancel" class="glass-button bg-red-600 hover:bg-red-700">لغو</button>
+        </div>
+    </div>
+    <div id="join-group-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-3 text-white">پیوستن به گروه</h2>
+            <input id="join-group-search" type="text" placeholder="جستجوی گروه..." class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <div id="group-search-results" class="max-h-40 overflow-y-auto mb-2"></div>
+            <input id="join-group-id" type="hidden">
+            <input id="join-group-password" type="password" placeholder="رمز عبور گروه (اگر لازم است)" class="w-full p-2 mb-2 rounded-lg bg-gray-700 text-white focus:outline-none">
+            <button id="join-group-submit" class="glass-button">پیوستن</button>
+            <button id="join-group-cancel" class="glass-button bg-red-600 hover:bg-red-700">لغو</button>
+        </div>
+    </div>
+    <div id="download-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
+        <div class="download-modal-content">
+            <h2 class="text-lg font-bold mb-3 text-white">دانلود فایل</h2>
+            <p class="mb-3 text-gray-300">آیا می‌خواهید فایل را دانلود کنید؟</p>
+            <a id="download-link" href="#" class="glass-button">دانلود</a>
+            <button id="download-cancel" class="glass-button bg-red-600 hover:bg-red-700">لغو</button>
+        </div>
+    </div>
+    <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
+        <div class="profile-modal-content">
+            <img id="profile-modal-image" src="{% get_media_prefix %}profiles/ICON_PROF.jpg" alt="Profile" class="w-20 h-20 rounded-full object-cover mb-3">
+            <h2 id="profile-modal-title" class="text-lg font-bold mb-2 text-white"></h2>
+            <p id="profile-modal-username" class="text-gray-300 mb-2"></p>
+            <p id="profile-modal-description" class="text-gray-300 mb-3"></p>
+            <button id="profile-modal-edit" class="glass-button hidden">ویرایش پروفایل</button>
+            <button id="profile-modal-close" class="glass-button bg-red-600 hover:bg-red-700">بستن</button>
+        </div>
+    </div>
+    <div id="notifications" class="fixed top-3 left-3 right-3 z-40"></div>
+
     <script>
-        let currentUser = '';
-        let currentUserId = null;
-        let currentTab = 'group';
-        let lastMessageId = 0;
-        let currentPrivateUserId = null;
+        let currentTab = 'private';
         let currentGroupId = null;
+        let currentPrivateUserId = null;
+        let lastMessageId = 0;
         let pollingInterval = null;
-        let touchStartTime = 0;
-        let touchTimeout;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const loginBtn = document.getElementById('login-btn');
-            const sendBtn = document.getElementById('send-btn');
-            const createGroupBtn = document.getElementById('create-group-btn');
-            const joinGroupBtn = document.getElementById('join-group-btn');
-            const joinGroupBtnModal = document.getElementById('join-group-btn-modal');
-            const emojiBtn = document.getElementById('emoji-btn');
-            const fileInput = document.getElementById('file-input');
-            const profileBtn = document.getElementById('profile-btn');
-            const messageInput = document.getElementById('message-input');
-            const searchUsers = document.getElementById('search-users');
-            const searchGroups = document.getElementById('search-groups');
-            const saveProfileBtn = document.getElementById('save-profile-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-            const profileImageInput = document.getElementById('profile-image-input');
-            const openSidebarBtn = document.getElementById('open-sidebar');
-            const closeSidebarBtn = document.getElementById('close-sidebar');
-            const menuBtn = document.getElementById('menu-btn');
-            const headerMenu = document.getElementById('header-menu');
-            const windowsDownloadBtn = document.getElementById('windows-download-btn');
-
-            loginBtn.addEventListener('click', enterChat);
-            sendBtn.addEventListener('click', sendMessage);
-            createGroupBtn.addEventListener('click', openGroupModal);
-            joinGroupBtn.addEventListener('click', () => {
-                document.getElementById('join-group-id').value = '';
-                document.getElementById('join-group-password').value = '';
-                document.getElementById('join-group-modal').style.display = 'flex';
-            });
-            joinGroupBtnModal.addEventListener('click', joinGroup);
-            emojiBtn.addEventListener('click', toggleEmojiPicker);
-            fileInput.addEventListener('change', handleFileSelect);
-            profileBtn.addEventListener('click', showProfile);
-            saveProfileBtn.addEventListener('click', saveProfile);
-            logoutBtn.addEventListener('click', logout);
-            profileImageInput.addEventListener('change', handleProfileImageSelect);
-
-            openSidebarBtn.addEventListener('click', () => {
-                document.getElementById('chat-sidebar').classList.add('active');
-            });
-
-            closeSidebarBtn.addEventListener('click', () => {
-                document.getElementById('chat-sidebar').classList.remove('active');
-            });
-
-            menuBtn.addEventListener('click', () => {
-                headerMenu.classList.toggle('hidden');
-                if (!headerMenu.classList.contains('hidden')) {
-                    headerMenu.style.transform = 'scale(1)';
-                } else {
-                    headerMenu.style.transform = 'scale(0)';
-                }
-            });
-
-            // باز کردن مودال هنگام کلیک روی آیکون ویندوز
-            windowsDownloadBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.getElementById('download-modal').style.display = 'flex';
-            });
-
-            document.getElementById('online-users-btn').addEventListener('click', () => {
-                fetchUsers();
-            });
-
-            document.getElementById('groups-btn').addEventListener('click', () => {
-                fetchGroups();
-            });
-
-            document.getElementById('profile-header-btn').addEventListener('click', () => {
-                showProfile();
-            });
-
-            messageInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-
-            searchUsers.addEventListener('input', () => {
-                const query = searchUsers.value.trim();
-                fetchUsers(query);
-            });
-
-            searchGroups.addEventListener('input', () => {
-                const query = searchGroups.value.trim();
-                fetchGroupSearch(query);
-            });
-
-            document.getElementById('groups-accordion').addEventListener('click', () => {
-                toggleAccordion('groups-content', 'groups-accordion');
-            });
-            document.getElementById('profiles-accordion').addEventListener('click', () => {
-                toggleAccordion('profiles-content', 'profiles-accordion');
-            });
-            document.getElementById('search-groups-accordion').addEventListener('click', () => {
-                toggleAccordion('search-groups-content', 'search-groups-accordion');
-            });
-
-            document.addEventListener('click', (e) => {
-                const contextMenu = document.querySelector('.context-menu');
-                if (contextMenu && !contextMenu.contains(e.target)) {
-                    contextMenu.remove();
-                }
-            });
-
-            // ثبت زمان ورود کاربر
-            updateOnlineTime();
-        });
-
-        function closeDownloadModal() {
-            document.getElementById('download-modal').style.display = 'none';
+        function getCsrfToken() {
+            const name = 'csrftoken';
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [key, value] = cookie.trim().split('=');
+                if (key === name) return value;
+            }
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         }
 
-        function downloadPart(url) {
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = '';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            closeDownloadModal();
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification p-3 rounded-lg text-white ${type === 'error' ? 'bg-red-600' : type === 'info' ? 'bg-blue-600' : 'bg-green-600'}`;
+            notification.textContent = message;
+            document.getElementById('notifications').appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
         }
 
-        function toggleAccordion(contentId, accordionId) {
-            const content = document.getElementById(contentId);
-            const accordion = document.getElementById(accordionId);
-            content.classList.toggle('active');
-            accordion.classList.toggle('active');
+        function showContextMenu(event, messageId, isSender) {
+            event.preventDefault();
+            const existingMenu = document.querySelector('.context-menu');
+            if (existingMenu) existingMenu.remove();
+
+            const menu = document.createElement('div');
+            menu.className = 'context-menu absolute bg-gray-800 rounded-lg shadow-lg p-2 z-10';
+            menu.style.top = `${event.pageY}px`;
+            menu.style.left = `${event.pageX}px`;
+
+            if (isSender) {
+                menu.innerHTML = `
+                    <button class="block w-full text-right p-2 hover:bg-gray-700 rounded" onclick="editMessage(${messageId})">ویرایش</button>
+                    <button class="block w-full text-right p-2 hover:bg-gray-700 rounded" onclick="deleteMessage(${messageId})">حذف</button>
+                    <button class="block w-full text-right p-2 hover:bg-gray-700 rounded" onclick="replyToMessage(${messageId})">پاسخ</button>
+                    <button class="block w-full text-right p-2 hover:bg-gray-700 rounded" onclick="forwardMessage(${messageId})">ارسال به دیگری</button>
+                `;
+            } else {
+                menu.innerHTML = `
+                    <button class="block w-full text-right p-2 hover:bg-gray-700 rounded" onclick="downloadMessageFiles(${messageId})">دانلود فایل‌ها</button>
+                    <button class="block w-full text-right p-2 hover:bg-gray-700 rounded" onclick="replyToMessage(${messageId})">پاسخ</button>
+                    <button class="block w-full text-right p-2 hover:bg-gray-700 rounded" onclick="forwardMessage(${messageId})">ارسال به دیگری</button>
+                `;
+            }
+
+            document.body.appendChild(menu);
+            document.addEventListener('click', () => menu.remove(), { once: true });
         }
 
-        function toggleEmojiPicker() {
-            alert('اموجی‌ها هنوز پیاده‌سازی نشده‌اند!');
+        function editMessage(messageId) {
+            const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+            const content = messageElement.querySelector('.message-content').textContent;
+            const newContent = prompt('پیام جدید را وارد کنید:', content);
+            if (newContent && newContent.trim()) {
+                fetch(`/api/messages/${messageId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ content: newContent.trim() })
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'error') throw new Error(data.message);
+                        messageElement.querySelector('.message-content').textContent = newContent.trim();
+                        saveMessages();
+                        showNotification('پیام ویرایش شد', 'success');
+                    })
+                    .catch(error => {
+                        console.error('Edit message error:', error);
+                        showNotification(`خطا در ویرایش پیام: ${error.message}`, 'error');
+                    });
+            }
+        }
+
+        function deleteMessage(messageId) {
+            if (confirm('آیا مطمئن هستید که می‌خواهید این پیام را حذف کنید؟')) {
+                fetch(`/api/messages/${messageId}/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'error') throw new Error(data.message);
+                        document.querySelector(`[data-message-id="${messageId}"]`).remove();
+                        saveMessages();
+                        showNotification('پیام حذف شد', 'success');
+                    })
+                    .catch(error => {
+                        console.error('Delete message error:', error);
+                        showNotification(`خطا در حذف پیام: ${error.message}`, 'error');
+                    });
+            }
+        }
+
+        function downloadMessageFiles(messageId) {
+            const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+            const files = messageElement.querySelectorAll('a[href]');
+            if (files.length === 0) {
+                showNotification('هیچ فایلی برای دانلود وجود ندارد', 'error');
+                return;
+            }
+            files.forEach(file => {
+                document.getElementById('download-link').href = file.href;
+                const modal = document.getElementById('download-modal');
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.querySelector('.download-modal-content').classList.add('show'), 10);
+            });
+        }
+
+        function replyToMessage(messageId) {
+            const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+            const content = messageElement.querySelector('.message-content').textContent;
+            const replyContent = prompt('پاسخ خود را وارد کنید:', `پاسخ به: ${content}`);
+            if (replyContent && replyContent.trim()) {
+                sendMessageWithFiles([], replyContent);
+            }
+        }
+
+        function forwardMessage(messageId) {
+            const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+            const content = messageElement.querySelector('.message-content').textContent;
+            const recipient = prompt('نام کاربری دریافت‌کننده را وارد کنید:');
+            if (recipient && recipient.trim()) {
+                fetch('/api/users/?search=' + encodeURIComponent(recipient), {
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.users.length > 0) {
+                            currentPrivateUserId = data.users[0].id;
+                            sendMessageWithFiles([], content);
+                            showNotification('پیام ارسال شد', 'success');
+                        } else {
+                            showNotification('کاربر یافت نشد', 'error');
+                        }
+                    });
+            }
+        }
+
+        function showUserProfile() {
+            fetch('/api/users/current/', {
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('کاربر وارد نشده است');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('profile-modal-image').src = data.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
+                    document.getElementById('profile-modal-title').textContent = data.display_name || data.username;
+                    document.getElementById('profile-modal-username').textContent = `نام کاربری: ${data.username}`;
+                    document.getElementById('profile-modal-description').textContent = data.description || 'بدون توضیحات';
+                    document.getElementById('profile-modal-edit').classList.remove('hidden');
+                    const modal = document.getElementById('profile-modal');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => modal.querySelector('.profile-modal-content').classList.add('show'), 10);
+                })
+                .catch(error => {
+                    console.error('Fetch user profile error:', error);
+                    showNotification(`خطا در دریافت اطلاعات پروفایل: ${error.message}`, 'error');
+                });
+        }
+
+        function showChatProfile() {
+            if (currentTab === 'private' && currentPrivateUserId) {
+                fetch(`/api/users/${currentPrivateUserId}/`, {
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error('کاربر یافت نشد');
+                        return response.json();
+                    })
+                    .then(data => {
+                        document.getElementById('profile-modal-image').src = data.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
+                        document.getElementById('profile-modal-title').textContent = data.display_name || data.username;
+                        document.getElementById('profile-modal-username').textContent = `نام کاربری: ${data.username}`;
+                        document.getElementById('profile-modal-description').textContent = data.description || 'بدون توضیحات';
+                        document.getElementById('profile-modal-edit').classList.add('hidden');
+                        const modal = document.getElementById('profile-modal');
+                        modal.classList.remove('hidden');
+                        setTimeout(() => modal.querySelector('.profile-modal-content').classList.add('show'), 10);
+                    })
+                    .catch(error => {
+                        console.error('Fetch chat user profile error:', error);
+                        showNotification(`خطا در دریافت اطلاعات پروفایل: ${error.message}`, 'error');
+                    });
+            } else if (currentTab === 'group' && currentGroupId) {
+                fetch(`/api/groups/${currentGroupId}/`, {
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error('گروه یافت نشد');
+                        return response.json();
+                    })
+                    .then(data => {
+                        document.getElementById('profile-modal-image').src = data.image || '{% static "chat/group.png" %}';
+                        document.getElementById('profile-modal-title').textContent = data.name;
+                        document.getElementById('profile-modal-username').textContent = '';
+                        document.getElementById('profile-modal-description').textContent = data.description || 'بدون توضیحات';
+                        document.getElementById('profile-modal-edit').classList.add('hidden');
+                        const modal = document.getElementById('profile-modal');
+                        modal.classList.remove('hidden');
+                        setTimeout(() => modal.querySelector('.profile-modal-content').classList.add('show'), 10);
+                    })
+                    .catch(error => {
+                        console.error('Fetch group profile error:', error);
+                        showNotification(`خطا در دریافت اطلاعات گروه: ${error.message}`, 'error');
+                    });
+            } else {
+                showNotification('لطفاً یک چت خصوصی یا گروهی انتخاب کنید', 'error');
+            }
         }
 
         function handleFileSelect(e) {
             const files = e.target.files;
             if (!files.length) return;
+
+            const maxSize = 20 * 1024 * 1024 * 1024;
+            for (let file of files) {
+                if (file.size > maxSize) {
+                    showNotification(`فایل ${file.name} بیش از 20 گیگابایت است`, 'error');
+                    return;
+                }
+                if (file.size > 1024 * 1024 * 1024) {
+                    showNotification(`آپلود فایل ${file.name} ممکن است زمان‌بر باشد`, 'info');
+                }
+            }
+
             const formData = new FormData();
             Array.from(files).forEach(file => formData.append('files', file));
             fetch('/api/upload/', {
@@ -804,22 +644,38 @@
                 })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
-                    sendMessageWithFiles(data.file_urls);
+                    showNotification('فایل‌ها با موفقیت آپلود شدند', 'success');
+                    sendMessageWithFiles(data.file_ids);
                 })
                 .catch(error => {
+                    console.error('Upload error:', error);
                     showNotification(`خطا در آپلود فایل: ${error.message}`, 'error');
                 });
         }
 
-        function handleProfileImageSelect(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const formData = new FormData();
-            formData.append('profile_image', file);
-            fetch('/api/users/current/', {
-                method: 'PATCH',
-                headers: { 'X-CSRFToken': getCsrfToken() },
-                body: formData
+        function sendMessageWithFiles(fileIds = [], content = null) {
+            const messageInput = document.getElementById('message-input');
+            const message = content || messageInput.value.trim();
+            if (!message && !fileIds.length) {
+                showNotification('پیام یا فایل الزامی است', 'error');
+                return;
+            }
+            const data = { content: message, file_ids: fileIds };
+            if (currentTab === 'group' && currentGroupId) {
+                data.group_id = currentGroupId;
+            } else if (currentTab === 'private' && currentPrivateUserId) {
+                data.recipient_id = currentPrivateUserId;
+            } else {
+                showNotification('لطفاً یک چت خصوصی یا گروهی انتخاب کنید', 'error');
+                return;
+            }
+            fetch('/api/messages/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(data)
             })
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -827,31 +683,390 @@
                 })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
-                    document.getElementById('profile-image').src = data.profile_image;
-                    document.getElementById('profile-image').style.display = 'block';
-                    showNotification('تصویر پروفایل به‌روزرسانی شد', 'success');
+                    if (!content) messageInput.value = '';
+                    document.getElementById('file-input').value = '';
+                    showNotification('پیام ارسال شد', 'success');
+                    fetchMessages();
                 })
                 .catch(error => {
-                    showNotification(`خطا در آپلود تصویر: ${error.message}`, 'error');
+                    console.error('Message send error:', error);
+                    showNotification(`خطا در ارسال پیام: ${error.message}`, 'error');
                 });
         }
 
-        function getCsrfToken() {
-            return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+        function markMessagesSeen() {
+            if (currentTab === 'group' && currentGroupId) {
+                fetch('/api/messages/seen/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ group_id: currentGroupId })
+                });
+            } else if (currentTab === 'private' && currentPrivateUserId) {
+                fetch('/api/messages/seen/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ recipient_id: currentPrivateUserId })
+                });
+            }
         }
 
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = 'notification fixed top-4 left-4 bg-gray-900 text-white p-4 rounded-lg shadow-xl z-[1003]';
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
+        function fetchMessages() {
+            const params = new URLSearchParams({ last_message_id: lastMessageId });
+            if (currentTab === 'group' && currentGroupId) {
+                params.append('group_id', currentGroupId);
+            } else if (currentTab === 'private' && currentPrivateUserId) {
+                params.append('recipient_id', currentPrivateUserId);
+            }
+            fetch(`/api/messages/?${params.toString()}`, {
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(messages => {
+                    const chatMessages = document.getElementById('chat-messages');
+                    messages.forEach(msg => {
+                        if (msg.id > lastMessageId) lastMessageId = msg.id;
+                        const messageElement = document.createElement('div');
+                        const isSender = msg.sender.id === getCurrentUserId();
+                        messageElement.className = `message flex ${isSender ? 'justify-end' : 'justify-start'}`;
+                        messageElement.dataset.messageId = msg.id;
+                        let content = msg.content ? `<p class="message-content">${msg.content}</p>` : '';
+                        if (msg.files && msg.files.length) {
+                            msg.files.forEach(file => {
+                                if (file.file_type === 'image') {
+                                    content += `<img src="${file.file}" alt="Image" class="message-image cursor-pointer max-w-full rounded-lg mt-2" onclick="showImageModal('${file.file}')">`;
+                                } else if (file.file_type === 'video') {
+                                    content += `<video src="${file.file}" controls class="max-w-full rounded-lg mt-2"></video>`;
+                                } else if (file.file_type === 'audio') {
+                                    content += `<audio src="${file.file}" controls class="mt-2 w-full"></audio>`;
+                                } else {
+                                    content += `<a href="${file.file}" target="_blank" class="text-blue-400 underline mt-2 block">دانلود فایل: ${file.file.split('/').pop()}</a>`;
+                                }
+                            });
+                        }
+                        const timestamp = new Date(msg.timestamp).toLocaleString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+                        let tickClass = '';
+                        if (isSender) {
+                            tickClass = msg.read_at ? 'read' : msg.delivered_at ? 'delivered' : '';
+                        }
+                        messageElement.innerHTML = `
+                            <div class="message-bubble ${isSender ? 'sent' : 'received'}">
+                                <p class="text-sm font-bold">${msg.sender.display_name || msg.sender.username}</p>
+                                <span class="message-ticks ${tickClass}"></span>
+                                ${content}
+                                <p class="text-xs text-gray-400 mt-1">${timestamp}</p>
+                            </div>
+                        `;
+                        messageElement.addEventListener('contextmenu', e => showContextMenu(e, msg.id, isSender));
+                        chatMessages.appendChild(messageElement);
+                    });
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    saveMessages();
+                    markMessagesSeen();
+                })
+                .catch(error => {
+                    console.error('Fetch messages error:', error);
+                    showNotification(`خطا در دریافت پیام‌ها: ${error.message}`, 'error');
+                });
         }
 
-        function enterChat() {
-            const username = document.getElementById('username').value.trim();
-            const displayName = document.getElementById('display_name').value.trim();
-            const password = document.getElementById('password').value.trim();
+        function saveMessages() {
+            const messages = [];
+            document.querySelectorAll('#chat-messages .message').forEach(msg => {
+                messages.push({
+                    id: msg.dataset.messageId,
+                    content: msg.querySelector('.message-content')?.textContent || '',
+                    timestamp: msg.querySelector('.text-gray-400')?.textContent || ''
+                });
+            });
+            localStorage.setItem('chatMessages', JSON.stringify(messages));
+        }
+
+        function getCurrentUserId() {
+            return parseInt(localStorage.getItem('user_id')) || null;
+        }
+
+        function showImageModal(src) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="relative max-w-4xl w-full p-4">
+                    <button class="absolute top-4 left-4 text-white text-3xl" onclick="this.parentElement.parentElement.remove()">×</button>
+                    <img src="${src}" alt="Full Image" class="w-full h-auto rounded-lg">
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function fetchPrivateChats() {
+            fetch('/api/users/chatted/', {
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const privateChats = document.getElementById('private-chats');
+                    privateChats.innerHTML = '';
+                    data.users.forEach(user => {
+                        const chatItem = document.createElement('div');
+                        chatItem.className = 'sidebar-item p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center space-x-3 space-x-reverse';
+                        chatItem.dataset.userId = user.id;
+                        chatItem.innerHTML = `
+                            <img src="${user.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg'}" alt="User" class="w-10 h-10 rounded-full object-cover">
+                            <div>
+                                <p class="font-semibold text-base">${user.display_name || user.username}</p>
+                                <p class="text-sm text-gray-400">${user.is_online ? 'آنلاین' : 'آفلاین'}</p>
+                            </div>
+                        `;
+                        chatItem.addEventListener('click', () => {
+                            currentTab = 'private';
+                            currentPrivateUserId = user.id;
+                            currentGroupId = null;
+                            document.getElementById('chat-title').textContent = user.display_name || user.username;
+                            document.getElementById('chat-image').src = user.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
+                            document.getElementById('chat-messages').innerHTML = '';
+                            lastMessageId = 0;
+                            fetchMessages();
+                        });
+                        privateChats.appendChild(chatItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Fetch private chats error:', error);
+                    showNotification(`خطا در دریافت چت‌های خصوصی: ${error.message}`, 'error');
+                });
+        }
+
+        function fetchGroups() {
+            fetch('/api/groups/', {
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const groups = document.getElementById('groups');
+                    groups.innerHTML = '';
+                    data.forEach(group => {
+                        const groupItem = document.createElement('div');
+                        groupItem.className = 'sidebar-item p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center space-x-3 space-x-reverse';
+                        groupItem.dataset.groupId = group.id;
+                        groupItem.innerHTML = `
+                            <img src="${group.image || '{% static "chat/group.png" %}'}" alt="Group" class="w-10 h-10 rounded-full object-cover">
+                            <div>
+                                <p class="font-semibold text-base">${group.name}</p>
+                                <p class="text-sm text-gray-400">${group.description || 'بدون توضیحات'}</p>
+                            </div>
+                        `;
+                        groupItem.addEventListener('click', () => {
+                            currentTab = 'group';
+                            currentGroupId = group.id;
+                            currentPrivateUserId = null;
+                            document.getElementById('chat-title').textContent = group.name;
+                            document.getElementById('chat-image').src = group.image || '{% static "chat/group.png" %}';
+                            document.getElementById('chat-messages').innerHTML = '';
+                            lastMessageId = 0;
+                            fetchMessages();
+                        });
+                        groups.appendChild(groupItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Fetch groups error:', error);
+                    showNotification(`خطا در دریافت گروه‌ها: ${error.message}`, 'error');
+                });
+        }
+
+        function searchUsersOrGroups(query) {
+            if (currentTab === 'private') {
+                fetch(`/api/users/?search=${encodeURIComponent(query)}`, {
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const privateChats = document.getElementById('private-chats');
+                        privateChats.innerHTML = '';
+                        data.users.forEach(user => {
+                            const chatItem = document.createElement('div');
+                            chatItem.className = 'sidebar-item p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center space-x-3 space-x-reverse';
+                            chatItem.dataset.userId = user.id;
+                            chatItem.innerHTML = `
+                                <img src="${user.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg'}" alt="User" class="w-10 h-10 rounded-full object-cover">
+                                <div>
+                                    <p class="font-semibold text-base">${user.display_name || user.username}</p>
+                                    <p class="text-sm text-gray-400">${user.is_online ? 'آنلاین' : 'آفلاین'}</p>
+                                </div>
+                            `;
+                            chatItem.addEventListener('click', () => {
+                                currentTab = 'private';
+                                currentPrivateUserId = user.id;
+                                currentGroupId = null;
+                                document.getElementById('chat-title').textContent = user.display_name || user.username;
+                                document.getElementById('chat-image').src = user.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
+                                document.getElementById('chat-messages').innerHTML = '';
+                                lastMessageId = 0;
+                                fetchMessages();
+                            });
+                            privateChats.appendChild(chatItem);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Search users error:', error);
+                        showNotification(`خطا در جستجوی کاربران: ${error.message}`, 'error');
+                    });
+            } else {
+                fetch(`/api/groups/search/?search=${encodeURIComponent(query)}`, {
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const groups = document.getElementById('groups');
+                        groups.innerHTML = '';
+                        data.groups.forEach(group => {
+                            const groupItem = document.createElement('div');
+                            groupItem.className = 'sidebar-item p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center space-x-3 space-x-reverse';
+                            groupItem.dataset.groupId = group.id;
+                            groupItem.innerHTML = `
+                                <img src="${group.image || '{% static "chat/group.png" %}'}" alt="Group" class="w-10 h-10 rounded-full object-cover">
+                                <div>
+                                    <p class="font-semibold text-base">${group.name}</p>
+                                    <p class="text-sm text-gray-400">${group.description || 'بدون توضیحات'}</p>
+                                </div>
+                            `;
+                            groupItem.addEventListener('click', () => {
+                                currentTab = 'group';
+                                currentGroupId = group.id;
+                                currentPrivateUserId = null;
+                                document.getElementById('chat-title').textContent = group.name;
+                                document.getElementById('chat-image').src = group.image || '{% static "chat/group.png" %}';
+                                document.getElementById('chat-messages').innerHTML = '';
+                                lastMessageId = 0;
+                                fetchMessages();
+                            });
+                            groups.appendChild(groupItem);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Search groups error:', error);
+                        showNotification(`خطا در جستجوی گروه‌ها: ${error.message}`, 'error');
+                    });
+            }
+        }
+
+        function checkLoginStatus() {
+            fetch('/api/users/current/', {
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('کاربر وارد نشده است');
+                    return response.json();
+                })
+                .then(data => {
+                    localStorage.setItem('user_id', data.id);
+                    document.getElementById('display-name').textContent = data.display_name || data.username;
+                    document.getElementById('username').textContent = data.username;
+                    document.getElementById('profile-image').src = data.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
+                    fetchPrivateChats();
+                    fetchGroups();
+                    startPolling();
+                    const modal = document.getElementById('login-modal');
+                    if (!modal.classList.contains('hidden')) {
+                        setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
+                    }
+                })
+                .catch(() => {
+                    const modal = document.getElementById('login-modal');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
+                });
+        }
+
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(fetchMessages, 5000);
+        }
+
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.getElementById('chat-sidebar').classList.add('translate-x-full');
+        });
+
+        document.getElementById('sidebar-open').addEventListener('click', () => {
+            document.getElementById('chat-sidebar').classList.remove('translate-x-full');
+        });
+
+        document.getElementById('private-tab').addEventListener('click', () => {
+            currentTab = 'private';
+            document.getElementById('private-tab').classList.add('text-purple-400', 'border-purple-400');
+            document.getElementById('group-tab').classList.remove('text-purple-400', 'border-purple-400');
+            document.getElementById('private-chats').classList.remove('hidden');
+            document.getElementById('groups').classList.add('hidden');
+            fetchPrivateChats();
+        });
+
+        document.getElementById('group-tab').addEventListener('click', () => {
+            currentTab = 'group';
+            document.getElementById('group-tab').classList.add('text-purple-400', 'border-purple-400');
+            document.getElementById('private-tab').classList.remove('text-purple-400', 'border-purple-400');
+            document.getElementById('groups').classList.remove('hidden');
+            document.getElementById('private-chats').classList.add('hidden');
+            fetchGroups();
+        });
+
+        document.getElementById('search-input').addEventListener('input', e => {
+            searchUsersOrGroups(e.target.value);
+        });
+
+        document.getElementById('header-menu-toggle').addEventListener('click', () => {
+            document.getElementById('header-menu').classList.toggle('hidden');
+        });
+
+        document.getElementById('create-group').addEventListener('click', () => {
+            document.getElementById('header-menu').classList.add('hidden');
+            const modal = document.getElementById('create-group-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
+        });
+
+        document.getElementById('join-group').addEventListener('click', () => {
+            document.getElementById('header-menu').classList.add('hidden');
+            const modal = document.getElementById('join-group-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
+        });
+
+        document.getElementById('logout').addEventListener('click', () => {
+            fetch('/api/users/logout/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    localStorage.removeItem('user_id');
+                    document.getElementById('header-menu').classList.add('hidden');
+                    const modal = document.getElementById('login-modal');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
+                    document.getElementById('chat-messages').innerHTML = '';
+                    document.getElementById('private-chats').innerHTML = '';
+                    document.getElementById('groups').innerHTML = '';
+                    localStorage.removeItem('chatMessages');
+                    clearInterval(pollingInterval);
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    showNotification('خطا در خروج', 'error');
+                });
+        });
+
+        document.getElementById('login-submit').addEventListener('click', () => {
+            const username = document.getElementById('login-username').value.trim();
+            const displayName = document.getElementById('login-display-name').value.trim();
+            const password = document.getElementById('login-password').value;
             if (!username || !password) {
                 showNotification('نام کاربری و رمز عبور الزامی است', 'error');
                 return;
@@ -870,596 +1085,77 @@
                 })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
-                    currentUser = data.display_name || username;
-                    currentUserId = data.user_id;
-                    document.getElementById('auth-container').style.display = 'none';
-                    document.getElementById('chat-container').style.display = 'flex';
-                    document.getElementById('current-chat').textContent = `چت گروهی - ${currentUser}`;
+                    localStorage.setItem('user_id', data.user_id);
+                    document.getElementById('display-name').textContent = data.display_name || data.username;
+                    document.getElementById('username').textContent = data.username;
+                    document.getElementById('profile-image').src = data.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
+                    document.getElementById('login-modal').classList.add('hidden');
+                    fetchPrivateChats();
                     fetchGroups();
-                    fetchChattedUsers();
                     startPolling();
-                    // ثبت زمان ورود
-                    localStorage.setItem('loginTime', Date.now());
                 })
                 .catch(error => {
+                    console.error('Login error:', error);
                     showNotification(`خطا در ورود: ${error.message}`, 'error');
                 });
-        }
+        });
 
-        function startPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(fetchMessages, 2000);
-        }
+        document.getElementById('profile-image').addEventListener('click', showUserProfile);
 
-        function fetchMessages() {
-            let url = `/api/messages/?last_message_id=${lastMessageId}`;
-            if (currentTab === 'group' && currentGroupId) {
-                url += `&group_id=${currentGroupId}`;
-            } else if (currentTab === 'private' && currentPrivateUserId) {
-                url += `&recipient_id=${currentPrivateUserId}`;
-            }
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(messages => {
-                    if (!Array.isArray(messages)) return;
-                    const messagesContainer = document.getElementById('chat-messages');
-                    messages.forEach(message => {
-                        if (!message.id || !message.sender) return;
-                        addMessage(message);
-                        lastMessageId = Math.max(lastMessageId, message.id);
-                    });
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                })
-                .catch(error => {
-                    showNotification(`خطا در دریافت پیام‌ها: ${error.message}`, 'error');
-                });
-        }
+        document.getElementById('chat-image').addEventListener('click', showChatProfile);
 
-        function fetchUsers(query = '') {
-            let url = '/api/users/';
-            if (query) url += `?search=${encodeURIComponent(query)}`;
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data.users) {
-                        showNotification('کاربری یافت نشد', 'info');
-                        return;
-                    }
-                    data.users.sort((a, b) => b.is_online - a.is_online);
-                    updateUsersList(data.users);
-                })
-                .catch(error => {
-                    showNotification(`خطا در دریافت کاربران: ${error.message}`, 'error');
-                });
-        }
-
-        function fetchGroups() {
-            fetch('/api/groups/')
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(groups => {
-                    if (!Array.isArray(groups)) {
-                        showNotification('گروهی یافت نشد', 'info');
-                        return;
-                    }
-                    const groupsList = document.getElementById('groups-list');
-                    groupsList.innerHTML = '';
-                    groups.forEach(group => {
-                        const groupElement = document.createElement('div');
-                        groupElement.className = 'sidebar-item p-2 rounded-lg cursor-pointer transition-all duration-200';
-                        const avatarContent = group.image ? `<img src="${group.image}" class="w-full h-full rounded-full" />` : group.name.charAt(0);
-                        groupElement.innerHTML = `
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 text-white flex items-center justify-center rounded-full">${avatarContent}</div>
-                                <div class="text-white text-sm sm:text-base">${group.name}</div>
-                            </div>
-                        `;
-                        groupElement.onclick = () => startGroupChat(group.id, group.name);
-                        groupsList.appendChild(groupElement);
-                    });
-                })
-                .catch(error => {
-                    showNotification(`خطا در دریافت گروه‌ها: ${error.message}`, 'error');
-                });
-        }
-
-        function fetchGroupSearch(query = '') {
-            let url = '/api/groups/search/';
-            if (query) url += `?search=${encodeURIComponent(query)}`;
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data.groups) {
-                        showNotification('گروهی یافت نشد', 'info');
-                        return;
-                    }
-                    const searchGroupsList = document.getElementById('search-groups-list');
-                    searchGroupsList.innerHTML = '';
-                    data.groups.forEach(group => {
-                        const groupElement = document.createElement('div');
-                        groupElement.className = 'sidebar-item p-2 rounded-lg cursor-pointer transition-all duration-200';
-                        const avatarContent = group.image ? `<img src="${group.image}" class="w-full h-full rounded-full" />` : group.name.charAt(0);
-                        groupElement.innerHTML = `
-                            <div class="flex items-center gap-3 justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 text-white flex items-center justify-center rounded-full">${avatarContent}</div>
-                                    <div class="text-white text-sm sm:text-base">${group.name} (ID: ${group.id})</div>
-                                </div>
-                                <button class="p-1 sm:p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs sm:text-sm" onclick="joinGroupFromSearch(${group.id}, '${group.name}')">پیوستن</button>
-                            </div>
-                        `;
-                        searchGroupsList.appendChild(groupElement);
-                    });
-                })
-                .catch(error => {
-                    showNotification(`خطا در جستجوی گروه‌ها: ${error.message}`, 'error');
-                });
-        }
-
-        function joinGroupFromSearch(groupId, groupName) {
-            document.getElementById('join-group-id').value = groupId;
-            document.getElementById('join-group-password').value = '';
-            document.getElementById('join-group-modal').style.display = 'flex';
-        }
-
-        function fetchChattedUsers() {
-            fetch('/api/users/chatted/')
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data.users) {
-                        showNotification('کاربری یافت نشد', 'info');
-                        return;
-                    }
-                    const profilesList = document.getElementById('profiles-list');
-                    profilesList.innerHTML = '';
-                    data.users.forEach(user => {
-                        const userElement = document.createElement('div');
-                        userElement.className = 'sidebar-item p-2 rounded-lg cursor-pointer transition-all duration-200';
-                        const avatarContent = user.profile_image ? `<img src="${user.profile_image}" class="w-full h-full rounded-full" />` : (user.display_name || user.username).charAt(0);
-                        userElement.innerHTML = `
-                            <div class="flex items-center gap-3 justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 text-white flex items-center justify-center rounded-full">${avatarContent}</div>
-                                    <div class="text-white text-sm sm:text-base">${user.display_name || user.username}</div>
-                                </div>
-                                <span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full ${user.is_online ? 'bg-green-500' : 'bg-red-500'}"></span>
-                            </div>
-                        `;
-                        userElement.onclick = () => startPrivateChat(user.id, user.display_name || user.username);
-                        profilesList.appendChild(userElement);
-                    });
-                })
-                .catch(error => {
-                    showNotification(`خطا در دریافت پروف‌ها: ${error.message}`, 'error');
-                });
-        }
-
-        function updateUsersList(users) {
-            const profilesList = document.getElementById('profiles-list');
-            profilesList.innerHTML = '';
-            users.forEach(user => {
-                if (user.id !== currentUserId) {
-                    const userElement = document.createElement('div');
-                    userElement.className = 'sidebar-item p-2 rounded-lg cursor-pointer transition-all duration-200';
-                    const avatarContent = user.profile_image ? `<img src="${user.profile_image}" class="w-full h-full rounded-full" />` : (user.display_name || user.username).charAt(0);
-                    userElement.innerHTML = `
-                        <div class="flex items-center gap-3 justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 text-white flex items-center justify-center rounded-full">${avatarContent}</div>
-                                <div class="text-white text-sm sm:text-base">${user.display_name || user.username}</div>
-                            </div>
-                            <span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full ${user.is_online ? 'bg-green-500' : 'bg-red-500'}"></span>
-                        </div>
-                    `;
-                    userElement.onclick = () => startPrivateChat(user.id, user.display_name || user.username);
-                    profilesList.appendChild(userElement);
-                }
-            });
-        }
-
-        function addMessage(message) {
-            if (!message.sender) return;
-            const messagesContainer = document.getElementById('chat-messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message mb-4 max-w-[80%] sm:max-w-[70%]';
-            messageDiv.dataset.messageId = message.id;
-            messageDiv.dataset.senderId = message.sender.id;
-            const time = new Date(message.timestamp);
-            const timeStr = time.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-            messageDiv.innerHTML = `
-                <div class="flex justify-between text-xs sm:text-sm text-gray-400 mb-1">
-                    <span class="message-username">${message.sender.display_name || message.sender.username}</span>
-                    <span class="message-time">${timeStr}</span>
-                </div>
-                <div class="message-bubble p-3 text-white shadow-md text-sm sm:text-base">${message.content}</div>
-            `;
-            if (message.files && message.files.length > 0) {
-                message.files.forEach(file => {
-                    const fileElement = document.createElement('div');
-                    fileElement.dataset.fileUrl = file.file;
-                    if (file.file_type === 'image') {
-                        fileElement.innerHTML = `<img src="${file.file}" class="max-w-32 sm:max-w-48 mt-2 rounded-lg" />`;
-                    } else if (file.file_type === 'video') {
-                        fileElement.innerHTML = `<video src="${file.file}" class="anime-video-player max-w-32 sm:max-w-48 mt-2 rounded-lg" controls></video>`;
-                    } else if (file.file_type === 'audio') {
-                        fileElement.innerHTML = `<audio src="${file.file}" class="mt-2" controls></audio>`;
-                    } else {
-                        fileElement.innerHTML = `<a href="${file.file}" target="_blank" class="text-indigo-400 hover:underline text-xs sm:text-sm">دانلود فایل</a>`;
-                    }
-                    messageDiv.appendChild(fileElement);
-                });
-            }
-            messagesContainer.appendChild(messageDiv);
-
-            messageDiv.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                showContextMenu(e, message);
-            });
-            messageDiv.addEventListener('touchstart', (e) => {
-                touchStartTime = Date.now();
-                touchTimeout = setTimeout(() => showContextMenu(e, message), 500);
-            });
-            messageDiv.addEventListener('touchend', () => {
-                clearTimeout(touchTimeout);
-            });
-        }
-
-        function showContextMenu(e, message) {
-            const existingMenu = document.querySelector('.context-menu');
-            if (existingMenu) existingMenu.remove();
-
-            const isOwnMessage = message.sender.id === currentUserId;
-            const menu = document.createElement('div');
-            menu.className = 'context-menu';
-            const rect = e.target.getBoundingClientRect();
-            menu.style.top = `${e.clientY || e.touches[0].clientY}px`;
-            menu.style.left = `${e.clientX || e.touches[0].clientX}px`;
-
-            if (isOwnMessage) {
-                menu.innerHTML = `
-                    <button onclick="editMessage(${message.id}, '${message.content.replace(/'/g, "\\'")}')">ویرایش</button>
-                    <button onclick="deleteMessage(${message.id})">حذف</button>
-                    <button onclick="copyMessage('${message.content.replace(/'/g, "\\'")}')">کپی</button>
-                `;
-            } else {
-                menu.innerHTML = `
-                    <button onclick="deleteMessage(${message.id})">حذف (برای من)</button>
-                    <button onclick="copyMessage('${message.content.replace(/'/g, "\\'")}')">کپی</button>
-                `;
-            }
-
-            if (message.files && message.files.length > 0) {
-                message.files.forEach(file => {
-                    const downloadBtn = document.createElement('button');
-                    downloadBtn.textContent = 'دانلود فایل';
-                    downloadBtn.onclick = () => downloadFile(file.file);
-                    menu.appendChild(downloadBtn);
-                });
-            }
-
-            document.body.appendChild(menu);
-        }
-
-        function editMessage(messageId, content) {
-            const modal = document.getElementById('edit-message-modal');
-            const input = document.getElementById('edit-message-input');
-            input.value = content;
-            modal.style.display = 'flex';
-
-            document.getElementById('save-edit-message-btn').onclick = () => {
-                const newContent = input.value.trim();
-                if (!newContent) {
-                    showNotification('پیام نمی‌تواند خالی باشد', 'error');
-                    return;
-                }
-                fetch(`/api/messages/${messageId}/`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCsrfToken()
-                    },
-                    body: JSON.stringify({ content: newContent })
-                })
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.status === 'error') throw new Error(data.message);
-                        showNotification('پیام ویرایش شد', 'success');
-                        closeEditMessageModal();
-                        fetchMessages();
-                    })
-                    .catch(error => {
-                        showNotification(`خطا در ویرایش پیام: ${error.message}`, 'error');
-                    });
-            };
-        }
-
-        function closeEditMessageModal() {
-            document.getElementById('edit-message-modal').style.display = 'none';
-        }
-
-        function deleteMessage(messageId) {
-            fetch(`/api/messages/${messageId}/`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': getCsrfToken() }
-            })
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'error') throw new Error(data.message);
-                    showNotification('پیام حذف شد', 'success');
-                    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
-                    if (messageDiv) messageDiv.remove();
-                })
-                .catch(error => {
-                    showNotification(`خطا در حذف پیام: ${error.message}`, 'error');
-                });
-        }
-
-        function copyMessage(content) {
-            navigator.clipboard.writeText(content)
-                .then(() => showNotification('متن کپی شد', 'success'))
-                .catch(() => showNotification('خطا در کپی متن', 'error'));
-        }
-
-        function downloadFile(url) {
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = '';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function sendMessage() {
-            const messageInput = document.getElementById('message-input');
-            const message = messageInput.value.trim();
-            if (!message) {
-                showNotification('لطفاً پیامی بنویسید', 'error');
-                return;
-            }
-            if (message.length > 1000) {
-                showNotification('پیام نمی‌تواند بیشتر از ۱۰۰۰ کاراکتر باشد', 'error');
-                return;
-            }
-            const data = { content: message };
-            if (currentTab === 'group' && currentGroupId) {
-                data.group_id = currentGroupId;
-            } else if (currentTab === 'private' && currentPrivateUserId) {
-                data.recipient_id = currentPrivateUserId;
-            }
-            fetch('/api/messages/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
-                },
-                body: JSON.stringify(data)
-            })
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'error') throw new Error(data.message);
-                    messageInput.value = '';
-                    fetchMessages();
-                })
-                .catch(error => {
-                    showNotification(`خطا در ارسال پیام: ${error.message}`, 'error');
-                });
-        }
-
-        function sendMessageWithFiles(fileUrls) {
-            const messageInput = document.getElementById('message-input');
-            const message = messageInput.value.trim();
-            if (message.length > 1000) {
-                showNotification('پیام نمی‌تواند بیشتر از ۱۰۰۰ کاراکتر باشد', 'error');
-                return;
-            }
-            const data = { content: message, file_urls: fileUrls };
-            if (currentTab === 'group' && currentGroupId) {
-                data.group_id = currentGroupId;
-            } else if (currentTab === 'private' && currentPrivateUserId) {
-                data.recipient_id = currentPrivateUserId;
-            }
-            fetch('/api/messages/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
-                },
-                body: JSON.stringify(data)
-            })
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'error') throw new Error(data.message);
-                    messageInput.value = '';
-                    showNotification('فایل ارسال شد', 'success');
-                    fetchMessages();
-                })
-                .catch(error => {
-                    showNotification(`خطا در ارسال فایل: ${error.message}`, 'error');
-                });
-        }
-
-        function updateOnlineTime() {
-            const loginTime = localStorage.getItem('loginTime');
-            if (loginTime) {
-                const currentTime = Date.now();
-                let totalOnlineTime = parseInt(localStorage.getItem('totalOnlineTime') || '0', 10);
-                totalOnlineTime += (currentTime - parseInt(loginTime, 10)) / 1000; // به ثانیه
-                localStorage.setItem('totalOnlineTime', totalOnlineTime);
-                localStorage.setItem('loginTime', currentTime);
-            }
-            setTimeout(updateOnlineTime, 60000); // هر دقیقه به‌روزرسانی
-        }
-
-        function calculateOnlineTime() {
-            const totalOnlineTime = parseInt(localStorage.getItem('totalOnlineTime') || '0', 10);
-            const hours = Math.floor(totalOnlineTime / 3600);
-            const minutes = Math.floor((totalOnlineTime % 3600) / 60);
-            return `${hours} ساعت و ${minutes} دقیقه`;
-        }
-
-        function calculateScore() {
-            const totalOnlineTime = parseInt(localStorage.getItem('totalOnlineTime') || '0', 10);
-            const hours = totalOnlineTime / 3600; // ثانیه به ساعت
-            return Math.floor(hours); // 1 امتیاز به ازای هر ساعت
-        }
-
-        function fetchUserMessages() {
-            return fetch(`/api/messages/?sender_id=${currentUserId}`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(messages => {
-                    if (!Array.isArray(messages)) return [];
-                    return messages.filter(message => message.sender && message.sender.id === currentUserId);
-                })
-                .catch(error => {
-                    showNotification(`خطا در دریافت پیام‌های کاربر: ${error.message}`, 'error');
-                    return [];
-                });
-        }
-
-        function showProfile() {
-            fetch('/api/users/current/')
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    document.getElementById('profile-username').value = data.username;
-                    document.getElementById('profile-display-name').value = data.display_name || '';
-                    if (data.profile_image) {
-                        document.getElementById('profile-image').src = data.profile_image;
-                        document.getElementById('profile-image').style.display = 'block';
-                        document.getElementById('profile-avatar').style.display = 'none';
-                    } else {
-                        document.getElementById('profile-avatar').textContent = (data.display_name || data.username).charAt(0);
-                        document.getElementById('profile-image').style.display = 'none';
-                        document.getElementById('profile-avatar').style.display = 'flex';
-                    }
-
-                    // دریافت پیام‌ها و فایل‌ها
-                    fetchUserMessages().then(messages => {
-                        // تعداد پیام‌ها
-                        document.getElementById('profile-messages-count').textContent = messages.length;
-
-                        // نمایش پیام‌های اخیر (حداکثر 5 پیام)
-                        const messagesList = document.getElementById('profile-messages-list');
-                        messagesList.innerHTML = '';
-                        messages.slice(0, 5).forEach(message => {
-                            const time = new Date(message.timestamp);
-                            const timeStr = time.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-                            const messageItem = document.createElement('div');
-                            messageItem.className = 'profile-list-item';
-                            messageItem.textContent = `${message.content.substring(0, 50)}${message.content.length > 50 ? '...' : ''} (${timeStr})`;
-                            messagesList.appendChild(messageItem);
-                        });
-                        if (messages.length === 0) {
-                            const noMessageItem = document.createElement('div');
-                            noMessageItem.className = 'profile-list-item text-center';
-                            noMessageItem.textContent = 'هیچ پیامی ارسال نشده است';
-                            messagesList.appendChild(noMessageItem);
-                        }
-
-                        // تعداد و لیست فایل‌ها
-                        const files = messages.flatMap(message => message.files || []);
-                        document.getElementById('profile-files-count').textContent = files.length;
-                        const filesList = document.getElementById('profile-files-list');
-                        filesList.innerHTML = '';
-                        files.slice(0, 5).forEach(file => {
-                            const fileItem = document.createElement('div');
-                            fileItem.className = 'profile-list-item';
-                            fileItem.innerHTML = `<a href="${file.file}" target="_blank" class="text-indigo-400 hover:underline">${file.file.split('/').pop()}</a>`;
-                            filesList.appendChild(fileItem);
-                        });
-                        if (files.length === 0) {
-                            const noFileItem = document.createElement('div');
-                            noFileItem.className = 'profile-list-item text-center';
-                            noFileItem.textContent = 'هیچ فایلی ارسال نشده است';
-                            filesList.appendChild(noFileItem);
-                        }
-                    });
-
-                    // زمان آنلاین
-                    document.getElementById('profile-online-time').textContent = calculateOnlineTime();
-
-                    // امتیاز
-                    document.getElementById('profile-score').textContent = calculateScore();
-
-                    document.getElementById('profile-modal').style.display = 'flex';
-                })
-                .catch(error => {
-                    showNotification(`خطا در دریافت اطلاعات کاربر: ${error.message}`, 'error');
-                });
-        }
-
-        function closeProfileModal() {
-            document.getElementById('profile-modal').style.display = 'none';
-        }
-
-        function saveProfile() {
-            const username = document.getElementById('profile-username').value.trim();
-            const displayName = document.getElementById('profile-display-name').value.trim();
-            const password = document.getElementById('profile-password').value.trim();
-            if (!username) {
-                showNotification('نام کاربری الزامی است', 'error');
-                return;
-            }
-            const data = { username, display_name: displayName };
-            if (password) data.password = password;
+        document.getElementById('edit-profile-submit').addEventListener('click', () => {
+            const username = document.getElementById('edit-username').value.trim();
+            const displayName = document.getElementById('edit-display-name').value.trim();
+            const password = document.getElementById('edit-password').value;
+            const profileImage = document.getElementById('edit-profile-image').files[0];
+            const description = document.getElementById('edit-description').value.trim();
+            const formData = new FormData();
+            if (username) formData.append('username', username);
+            if (displayName) formData.append('display_name', displayName);
+            if (password) formData.append('password', password);
+            if (profileImage) formData.append('profile_image', profileImage);
+            if (description) formData.append('description', description);
             fetch('/api/users/current/', {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
-                },
-                body: JSON.stringify(data)
+                headers: { 'X-CSRFToken': getCsrfToken() },
+                body: formData
             })
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     return response.json();
                 })
                 .then(data => {
-                    if (data.status === 'error') throw new Error(data.message);
-                    currentUser = data.display_name || data.username;
+                    document.getElementById('display-name').textContent = data.display_name || data.username;
+                    document.getElementById('username').textContent = data.username;
+                    document.getElementById('profile-image').src = data.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
+                    document.getElementById('edit-profile-modal').classList.add('hidden');
                     showNotification('پروفایل به‌روزرسانی شد', 'success');
-                    closeProfileModal();
                 })
                 .catch(error => {
-                    showNotification(`خطا در به‌روزرسانی: ${error.message}`, 'error');
+                    console.error('Edit profile error:', error);
+                    showNotification(`خطا در ویرایش پروفایل: ${error.message}`, 'error');
                 });
-        }
+        });
 
-        function logout() {
-            fetch('/api/users/logout/', {
+        document.getElementById('edit-profile-cancel').addEventListener('click', () => {
+            document.getElementById('edit-profile-modal').classList.add('hidden');
+        });
+
+        document.getElementById('create-group-submit').addEventListener('click', () => {
+            const name = document.getElementById('group-name').value.trim();
+            const description = document.getElementById('group-description').value.trim();
+            const password = document.getElementById('group-password').value;
+            const image = document.getElementById('group-image').files[0];
+            const formData = new FormData();
+            formData.append('name', name);
+            if (description) formData.append('description', description);
+            if (password) formData.append('password', password);
+            if (image) formData.append('image', image);
+            fetch('/api/groups/', {
                 method: 'POST',
-                headers: { 'X-CSRFToken': getCsrfToken() }
+                headers: { 'X-CSRFToken': getCsrfToken() },
+                body: formData
             })
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -1467,64 +1163,56 @@
                 })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
-                    if (pollingInterval) clearInterval(pollingInterval);
-                    // به‌روزرسانی زمان آنلاین هنگام خروج
-                    const loginTime = localStorage.getItem('loginTime');
-                    if (loginTime) {
-                        let totalOnlineTime = parseInt(localStorage.getItem('totalOnlineTime') || '0', 10);
-                        totalOnlineTime += (Date.now() - parseInt(loginTime, 10)) / 1000;
-                        localStorage.setItem('totalOnlineTime', totalOnlineTime);
-                        localStorage.removeItem('loginTime');
-                    }
-                    window.location.reload();
+                    document.getElementById('create-group-modal').classList.add('hidden');
+                    fetchGroups();
+                    showNotification('گروه ایجاد شد', 'success');
                 })
                 .catch(error => {
-                    showNotification(`خطا در خروج: ${error.message}`, 'error');
+                    console.error('Create group error:', error);
+                    showNotification(`خطا در ایجاد گروه: ${error.message}`, 'error');
                 });
-        }
+        });
 
-        function startPrivateChat(userId, username) {
-            currentTab = 'private';
-            currentPrivateUserId = userId;
-            currentGroupId = null;
-            document.getElementById('current-chat').textContent = `چت با ${username}`;
-            document.getElementById('chat-messages').innerHTML = `<div class="text-center text-gray-400 p-4 rounded-lg bg-gray-900 text-sm sm:text-base">چت خصوصی با ${username}</div>`;
-            lastMessageId = 0;
-            fetchMessages();
-        }
+        document.getElementById('create-group-cancel').addEventListener('click', () => {
+            document.getElementById('create-group-modal').classList.add('hidden');
+        });
 
-        function startGroupChat(groupId, groupName) {
-            currentTab = 'group';
-            currentGroupId = groupId;
-            currentPrivateUserId = null;
-            document.getElementById('current-chat').textContent = `گروه ${groupName}`;
-            document.getElementById('chat-messages').innerHTML = `<div class="text-center text-gray-400 p-4 rounded-lg bg-gray-900 text-sm sm:text-base">چت گروهی: ${groupName}</div>`;
-            lastMessageId = 0;
-            fetchMessages();
-        }
-
-        function openGroupModal() {
-            document.getElementById('group-modal').style.display = 'flex';
-            document.getElementById('group-name').value = '';
-            document.getElementById('group-description').value = '';
-            document.getElementById('group-password').value = '';
-            document.getElementById('group-image-input').value = '';
-        }
-
-        function closeGroupModal() {
-            document.getElementById('group-modal').style.display = 'none';
-        }
-
-        function joinGroup() {
-            const groupIdInput = document.getElementById('join-group-id').value.trim();
-            const password = document.getElementById('join-group-password').value.trim();
-            if (!groupIdInput) {
-                showNotification('شناسه گروه الزامی است', 'error');
+        document.getElementById('join-group-search').addEventListener('input', e => {
+            const query = e.target.value.trim();
+            if (!query) {
+                document.getElementById('group-search-results').innerHTML = '';
                 return;
             }
-            const groupId = parseInt(groupIdInput, 10);
-            if (isNaN(groupId)) {
-                showNotification('شناسه گروه باید یک عدد باشد', 'error');
+            fetch(`/api/groups/search/?search=${encodeURIComponent(query)}`, {
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const results = document.getElementById('group-search-results');
+                    results.innerHTML = '';
+                    data.groups.forEach(group => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'p-2 hover:bg-gray-700 rounded cursor-pointer text-base';
+                        resultItem.textContent = group.name;
+                        resultItem.addEventListener('click', () => {
+                            document.getElementById('join-group-id').value = group.id;
+                            document.getElementById('join-group-search').value = group.name;
+                            results.innerHTML = '';
+                        });
+                        results.appendChild(resultItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Search groups error:', error);
+                    showNotification(`خطا در جستجوی گروه‌ها: ${error.message}`, 'error');
+                });
+        });
+
+        document.getElementById('join-group-submit').addEventListener('click', () => {
+            const groupId = document.getElementById('join-group-id').value;
+            const password = document.getElementById('join-group-password').value;
+            if (!groupId) {
+                showNotification('لطفاً یک گروه انتخاب کنید', 'error');
                 return;
             }
             fetch('/api/groups/join/', {
@@ -1541,55 +1229,48 @@
                 })
                 .then(data => {
                     if (data.status === 'error') throw new Error(data.message);
-                    document.getElementById('join-group-modal').style.display = 'none';
-                    showNotification('با موفقیت به گروه پیوستید', 'success');
+                    document.getElementById('join-group-modal').classList.add('hidden');
                     fetchGroups();
+                    showNotification('به گروه پیوستید', 'success');
                 })
                 .catch(error => {
-                    showNotification(`خطا در پیوستن: ${error.message}`, 'error');
-                });
-        }
-
-        function closeJoinGroupModal() {
-            document.getElementById('join-group-modal').style.display = 'none';
-        }
-
-        document.getElementById('save-group-btn').addEventListener('click', () => {
-            const name = document.getElementById('group-name').value.trim();
-            const description = document.getElementById('group-description').value.trim();
-            const password = document.getElementById('group-password').value.trim();
-            const imageInput = document.getElementById('group-image-input');
-            if (!name) {
-                showNotification('نام گروه الزامی است', 'error');
-                return;
-            }
-            const formData = new FormData();
-            formData.append('name', name);
-            formData.append('description', description);
-            formData.append('password', password);
-            formData.append('creator_id', currentUserId);
-            if (imageInput.files[0]) {
-                formData.append('image', imageInput.files[0]);
-            }
-            fetch('/api/groups/', {
-                method: 'POST',
-                headers: { 'X-CSRFToken': getCsrfToken() },
-                body: formData
-            })
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'error') throw new Error(data.message);
-                    document.getElementById('group-modal').style.display = 'none';
-                    showNotification('گروه با موفقیت ایجاد شد', 'success');
-                    fetchGroups();
-                })
-                .catch(error => {
-                    showNotification(`خطا در ایجاد گروه: ${error.message}`, 'error');
+                    console.error('Join group error:', error);
+                    showNotification(`خطا در پیوستن به گروه: ${error.message}`, 'error');
                 });
         });
+
+        document.getElementById('join-group-cancel').addEventListener('click', () => {
+            document.getElementById('join-group-modal').classList.add('hidden');
+        });
+
+        document.getElementById('file-upload').addEventListener('click', () => {
+            document.getElementById('file-input').click();
+        });
+
+        document.getElementById('file-input').addEventListener('change', handleFileSelect);
+
+        document.getElementById('send-message').addEventListener('click', () => sendMessageWithFiles());
+
+        document.getElementById('message-input').addEventListener('keypress', e => {
+            if (e.key === 'Enter') sendMessageWithFiles();
+        });
+
+        document.getElementById('download-cancel').addEventListener('click', () => {
+            document.getElementById('download-modal').classList.add('hidden');
+        });
+
+        document.getElementById('profile-modal-edit').addEventListener('click', () => {
+            document.getElementById('profile-modal').classList.add('hidden');
+            const modal = document.getElementById('edit-profile-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
+        });
+
+        document.getElementById('profile-modal-close').addEventListener('click', () => {
+            document.getElementById('profile-modal').classList.add('hidden');
+        });
+
+        checkLoginStatus();
     </script>
 </body>
 </html>
