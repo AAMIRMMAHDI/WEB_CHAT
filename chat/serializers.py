@@ -1,3 +1,4 @@
+# chat/serializers.py
 from rest_framework import serializers
 from .models import User, Group, Message, File
 
@@ -24,9 +25,9 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'creator', 'creator_id', 'members', 'image', 'created_at']
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
-    recipient = UserSerializer(read_only=True, allow_null=True)
-    group = GroupSerializer(read_only=True, allow_null=True)
+    sender = serializers.SerializerMethodField()
+    recipient = serializers.SerializerMethodField()
+    group = serializers.SerializerMethodField()
     sender_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), source='sender', write_only=True
     )
@@ -45,13 +46,15 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = ['id', 'sender', 'recipient', 'group', 'sender_id', 'recipient_id', 'group_id', 'content', 'timestamp', 'delivered_at', 'read_at', 'files', 'file_urls']
 
-    def create(self, validated_data):
-        file_urls = validated_data.pop('file_urls', [])
-        message = Message.objects.create(**validated_data)
-        for file_data in file_urls:
-            File.objects.create(
-                file=file_data['file'],
-                file_type=file_data['file_type'],
-                message=message
-            )
-        return message
+    def get_sender(self, obj):
+        return {'id': obj.sender.id, 'username': obj.sender.username, 'display_name': obj.sender.display_name}
+
+    def get_recipient(self, obj):
+        if obj.recipient:
+            return {'id': obj.recipient.id, 'username': obj.recipient.username, 'display_name': obj.recipient.display_name}
+        return None
+
+    def get_group(self, obj):
+        if obj.group:
+            return {'id': obj.group.id, 'name': obj.group.name}
+        return None

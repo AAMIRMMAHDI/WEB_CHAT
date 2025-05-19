@@ -1,3 +1,4 @@
+# chat/models.py
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
 import random
@@ -74,6 +75,8 @@ class Message(models.Model):
             models.Index(fields=['timestamp']),
             models.Index(fields=['sender', 'recipient']),
             models.Index(fields=['group']),
+            models.Index(fields=['sender', 'timestamp']),
+            models.Index(fields=['recipient', 'timestamp']),
         ]
 
 class File(models.Model):

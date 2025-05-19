@@ -1,13 +1,14 @@
+# chat_project/settings.py
 import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'your-secret-key-here'  # جایگزین با یک کلید امن
+SECRET_KEY = 'your-secret-key'  # کلید امنیتی خودت رو اینجا بذار
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']  # برای تولید محدود کنید
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -58,10 +59,18 @@ DATABASES = {
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
 LANGUAGE_CODE = 'fa-ir'
@@ -69,18 +78,16 @@ LANGUAGE_CODE = 'fa-ir'
 TIME_ZONE = 'Asia/Tehran'
 
 USE_I18N = True
+
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024 * 1024  # 20 گیگابایت
-FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024 * 1024  # 20 گیگابایت
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-SESSION_COOKIE_AGE = 5 * 60 * 60  # 5 ساعت
+# برای آپلود فایل‌های بزرگ
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 مگابایت

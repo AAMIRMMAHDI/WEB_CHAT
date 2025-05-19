@@ -18,7 +18,7 @@
         }
         body {
             background: #1a1a1a;
-            color: #e0e0e0;
+            color:rgb(250, 164, 164);
             overflow: hidden;
             height: 100vh;
             min-height: 100vh;
@@ -209,6 +209,28 @@
         #header-menu.show {
             opacity: 1;
             transform: translateY(0);
+        }
+        .progress-circle {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #4fc3f7;
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .progress-text {
+            font-size: 0.7rem;
+            color: #4fc3f7;
+            position: absolute;
+            bottom: 8px;
+            left: 40px;
         }
         @media (max-width: 640px) {
             body {
@@ -602,7 +624,6 @@
                     document.getElementById('profile-modal-image').src = data.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
                     document.getElementById('profile-modal-title').textContent = data.display_name || data.username;
                     document.getElementById('profile-modal-username').textContent = `نام کاربری: ${data.username}`;
-                    // فیلتر کردن کاراکترهای اضافی
                     let description = data.description || '';
                     description = description.replace(/["'>]/g, '');
                     document.getElementById('profile-modal-description').textContent = description;
@@ -631,7 +652,6 @@
                         document.getElementById('profile-modal-image').src = data.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
                         document.getElementById('profile-modal-title').textContent = data.display_name || data.username;
                         document.getElementById('profile-modal-username').textContent = `نام کاربری: ${data.username}`;
-                        // فیلتر کردن کاراکترهای اضافی
                         let description = data.description || '';
                         description = description.replace(/["'>]/g, '');
                         document.getElementById('profile-modal-description').textContent = description;
@@ -657,7 +677,6 @@
                         document.getElementById('profile-modal-image').src = data.image || '{% static "chat/group.png" %}';
                         document.getElementById('profile-modal-title').textContent = data.name;
                         document.getElementById('profile-modal-username').textContent = '';
-                        // فیلتر کردن کاراکترهای اضافی
                         let description = data.description || '';
                         description = description.replace(/["'>]/g, '');
                         document.getElementById('profile-modal-description').textContent = description;
@@ -679,7 +698,7 @@
             const files = e.target.files;
             if (!files.length) return;
 
-            const maxSize = 20 * 1024 * 1024 * 1024;
+            const maxSize = 20 * 1024 * 1024 * 1024; // 20 گیگابایت
             for (let file of files) {
                 if (file.size > maxSize) {
                     showNotification(`فایل ${file.name} بیش از 20 گیگابایت است`, 'error');
@@ -690,26 +709,58 @@
                 }
             }
 
+            // نمایش پیام موقت با انیمیشن پیشرفت
+            const chatMessages = document.getElementById('chat-messages');
+            const tempMessage = document.createElement('div');
+            tempMessage.className = 'message flex justify-end';
+            tempMessage.innerHTML = `
+                <div class="message-bubble sent relative">
+                    <p class="message-content">در حال ارسال فایل...</p>
+                    <div class="progress-circle"></div>
+                    <span class="progress-text">0%</span>
+                </div>
+            `;
+            chatMessages.appendChild(tempMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
             const formData = new FormData();
             Array.from(files).forEach(file => formData.append('files', file));
-            fetch('/api/upload/', {
-                method: 'POST',
-                headers: { 'X-CSRFToken': getCsrfToken() },
-                body: formData
-            })
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'error') throw new Error(data.message);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/upload/', true);
+            xhr.setRequestHeader('X-CSRFToken', getCsrfToken());
+
+            // ردیابی پیشرفت آپلود
+            xhr.upload.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    tempMessage.querySelector('.progress-text').textContent = `${percentComplete}%`;
+                }
+            };
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.status === 'error') {
+                        tempMessage.remove();
+                        showNotification(`خطا در آپلود فایل: ${data.message}`, 'error');
+                        return;
+                    }
                     showNotification('فایل‌ها با موفقیت آپلود شدند', 'success');
                     sendMessageWithFiles(data.file_ids);
-                })
-                .catch(error => {
-                    console.error('Upload error:', error);
-                    showNotification(`خطا در آپلود فایل: ${error.message}`, 'error');
-                });
+                    tempMessage.remove(); // حذف پیام موقت پس از آپلود موفق
+                } else {
+                    tempMessage.remove();
+                    showNotification(`خطا در آپلود فایل: خطای سرور ${xhr.status}`, 'error');
+                }
+            };
+
+            xhr.onerror = function() {
+                tempMessage.remove();
+                showNotification('خطا در اتصال به سرور', 'error');
+            };
+
+            xhr.send(formData);
         }
 
         function sendMessageWithFiles(fileIds = [], content = null) {
