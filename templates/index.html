@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="csrf-token" content="{% csrf_token %}">
     <title>چت</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://v1.fontapi.ir/css/Vazir">
@@ -20,8 +19,9 @@
         body {
             background: #1a1a1a;
             color: #e0e0e0;
-            overflow-x: hidden;
+            overflow: hidden;
             height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: row;
         }
@@ -64,7 +64,7 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .message-bubble.sent {
-            background: #d1e7dd;
+            background: #b3e5fc;
             border-radius: 15px 15px 0 15px;
             color: #000;
         }
@@ -87,7 +87,7 @@
             bottom: 0.3rem;
             left: 0.6rem;
             font-size: 0.7rem;
-            color: #34b7f1;
+            color: #4fc3f7;
         }
         .message-ticks.delivered::before {
             content: '✓';
@@ -129,25 +129,27 @@
             font-size: 1rem;
             border-radius: 15px;
             background: #2d3748;
+            color: #4fc3f7;
         }
         #file-upload, #send-message {
             padding: 0.8rem;
             font-size: 1.2rem;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(79, 195, 247, 0.2);
+            color: #4fc3f7;
         }
         .glass-button {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(79, 195, 247, 0.2);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
+            border: 1px solid rgba(79, 195, 247, 0.4);
+            color: #4fc3f7;
             padding: 0.8rem 1.5rem;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
         .glass-button:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(79, 195, 247, 0.3);
             transform: translateY(-2px);
         }
         .modal-content, .download-modal-content, .profile-modal-content {
@@ -170,17 +172,43 @@
         .download-icons {
             display: flex;
             gap: 0.5rem;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 30;
         }
         .download-icon {
-            font-size: 1.5rem;
-            color: #fff;
-            padding: 0.6rem;
+            font-size: 1.2rem;
+            color: #4fc3f7;
+            padding: 0.5rem;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(79, 195, 247, 0.2);
         }
         .download-icon:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(79, 195, 247, 0.3);
             transform: scale(1.1);
+        }
+        .search-container {
+            position: relative;
+            padding-top: 2.5rem;
+        }
+        #header-menu {
+            position: fixed;
+            top: 60px;
+            left: 10px;
+            background: rgba(31, 41, 55, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        #header-menu.show {
+            opacity: 1;
+            transform: translateY(0);
         }
         @media (max-width: 640px) {
             body {
@@ -244,15 +272,29 @@
                 border-radius: 10px;
             }
             .download-icons {
-                gap: 0.3rem;
+                gap: 0.4rem;
+                top: 8px;
+                left: 8px;
             }
             .download-icon {
-                font-size: 1.2rem;
+                font-size: 1rem;
                 padding: 0.4rem;
+            }
+            .search-container {
+                padding-top: 2rem;
             }
             header {
                 padding: 0.6rem;
                 border-radius: 10px 10px 0 0;
+            }
+            #header-menu {
+                top: 50px;
+                left: 8px;
+                width: calc(100% - 16px);
+                max-width: 300px;
+                background: rgba(31, 41, 55, 0.98);
+                border-radius: 10px;
+                padding: 1rem;
             }
         }
     </style>
@@ -274,13 +316,20 @@
             </div>
         </div>
         <div class="p-3">
-            <div class="relative">
-                <input id="search-input" type="text" placeholder="جستجو..." class="w-full p-2 pr-10 rounded-lg bg-gray-800 text-white focus:outline-none">
-                <i class="fas fa-search absolute right-3 top-2.5 text-gray-400"></i>
+            <div class="search-container">
+                <div class="download-icons">
+                    <a href="https://web-chat-mbai.onrender.com/" class="download-icon" title="دانلود نسخه وب"><i class="fas fa-globe"></i></a>
+                    <a href="https://download1531.mediafire.com/2f685mwdoqpgQtv4u5SD-NH6AD-O-V2yTXXg5DUh6lIxFXYQwKzBCt3uu5M4PmlD7Hyl3tia5SPbZgT9jen5Di1H9WypeI5BA_DekIGgCrN3B2NyPPbFRVZ-sdCcKK0R0J3TDBDqFUgQddtj_NDP_-Dh-odeKl2yOtnPrukMCY0rig/kuwthv9istlo4nw/app.apk" class="download-icon" title="دانلود نسخه اندروید"><i class="fab fa-android"></i></a>
+                    <a href="https://download856.mediafire.com/3csg8p22xligOFzmZENF4Aiz7-KNIuAt6APpBnw_t2WlrweyzteKkiZvYYAezu0k_R8wWmApmhDnwvYveezbWGAplPBdd1hZEL-u5UdDoOfOLdeHSrJpvcj1XHErUuCMfg7xJLRVq5RWaYKiGuROi8z3maLRhjfdRoIbmGyqsuFt5w/x221n3bupveqzwc/Setup_C_CHAT.exe" class="download-icon" title="دانلود نسخه ویندوز"><i class="fab fa-windows"></i></a>
+                </div>
+                <div class="relative">
+                    <input id="search-input" type="text" placeholder="جستجو..." class="w-full p-2 pr-10 rounded-lg bg-gray-800 text-white focus:outline-none">
+                    <i class="fas fa-search absolute right-3 top-2.5 text-gray-400"></i>
+                </div>
             </div>
         </div>
         <div class="flex border-b border-gray-700">
-            <button id="private-tab" class="flex-1 p-2 text-center font-semibold text-purple-400 border-b-2 border-purple-400">خصوصی</button>
+            <button id="private-tab" class="flex-1 p-2 text-center font-semibold text-cyan-400 border-b-2 border-cyan-400">خصوصی</button>
             <button id="group-tab" class="flex-1 p-2 text-center font-semibold text-gray-400 border-b-2 border-transparent">گروه</button>
         </div>
         <div id="sidebar-content" class="overflow-y-auto p-2" style="max-height: calc(100vh - 180px);">
@@ -298,15 +347,10 @@
                 <h1 id="chat-title" class="text-lg font-bold text-white">چت</h1>
             </div>
             <div class="flex items-center space-x-2 space-x-reverse">
-                <div class="download-icons">
-                    <a href="https://web-chat-mbai.onrender.com/" class="download-icon" title="دانلود نسخه وب"><i class="fas fa-globe"></i></a>
-                    <a href="https://download1531.mediafire.com/bboaigymkbigKYI3Q1YF6tMyGH1GTwWNPD-Ol9uq_BgZBZn4uP2cbqKjHNoF_gFIbAY36mrRrHrcF2kVqU6FXIP4irA8GflSAh9f2HWJUnmWQhgD7t7HIcncke2W9Eg8_gtkHmiD9GtQsK0eJDnyuEIRr2MzrzQIBpndkg5FnZOM/kuwthv9istlo4nw/app.apk" class="download-icon" title="دانلود نسخه اندروید"><i class="fab fa-android"></i></a>
-                    <a href="https://download856.mediafire.com/jijj9a1j8xxgifk2bhngutZU2yeElIEbITkng6Sl4WTd8Ret2pi_4ILxMF2Q0toinPHFXA1Pxg7SUOpVvgJWnLNaqJsKWVt2uLhQf8n6A8_HNhC6Eaw-hp5_2epPPLVayRPlnDcILn4NJ2FdQn0NAaqnPVowWKyEB3ydewdTmkwd/x221n3bupveqzwc/Setup_C_CHAT.exe" class="download-icon" title="دانلود نسخه ویندوز"><i class="fab fa-windows"></i></a>
-                </div>
                 <button id="header-menu-toggle" class="text-white">
                     <i class="fas fa-ellipsis-v"></i>
                 </button>
-                <div id="header-menu" class="hidden absolute left-2 top-12 bg-gray-800 rounded-lg shadow-lg p-2 z-10">
+                <div id="header-menu" class="hidden">
                     <button id="create-group" class="block w-full text-right p-2 hover:bg-gray-700 rounded">ایجاد گروه</button>
                     <button id="join-group" class="block w-full text-right p-2 hover:bg-gray-700 rounded">پیوستن به گروه</button>
                     <button id="logout" class="block w-full text-right p-2 hover:bg-gray-700 rounded">خروج</button>
@@ -396,6 +440,7 @@
         let currentPrivateUserId = null;
         let lastMessageId = 0;
         let pollingInterval = null;
+        let justOpenedModal = false;
 
         function getCsrfToken() {
             const name = 'csrftoken';
@@ -417,6 +462,7 @@
 
         function showContextMenu(event, messageId, isSender) {
             event.preventDefault();
+            event.stopPropagation();
             const existingMenu = document.querySelector('.context-menu');
             if (existingMenu) existingMenu.remove();
 
@@ -505,6 +551,7 @@
                 return;
             }
             files.forEach(file => {
+                justOpenedModal = true;
                 document.getElementById('download-link').href = file.href;
                 const modal = document.getElementById('download-modal');
                 modal.classList.remove('hidden');
@@ -551,10 +598,14 @@
                     return response.json();
                 })
                 .then(data => {
+                    justOpenedModal = true;
                     document.getElementById('profile-modal-image').src = data.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
                     document.getElementById('profile-modal-title').textContent = data.display_name || data.username;
                     document.getElementById('profile-modal-username').textContent = `نام کاربری: ${data.username}`;
-                    document.getElementById('profile-modal-description').textContent = data.description || 'بدون توضیحات';
+                    // فیلتر کردن کاراکترهای اضافی
+                    let description = data.description || '';
+                    description = description.replace(/["'>]/g, '');
+                    document.getElementById('profile-modal-description').textContent = description;
                     document.getElementById('profile-modal-edit').classList.remove('hidden');
                     const modal = document.getElementById('profile-modal');
                     modal.classList.remove('hidden');
@@ -576,10 +627,14 @@
                         return response.json();
                     })
                     .then(data => {
+                        justOpenedModal = true;
                         document.getElementById('profile-modal-image').src = data.profile_image || '{% get_media_prefix %}profiles/ICON_PROF.jpg';
                         document.getElementById('profile-modal-title').textContent = data.display_name || data.username;
                         document.getElementById('profile-modal-username').textContent = `نام کاربری: ${data.username}`;
-                        document.getElementById('profile-modal-description').textContent = data.description || 'بدون توضیحات';
+                        // فیلتر کردن کاراکترهای اضافی
+                        let description = data.description || '';
+                        description = description.replace(/["'>]/g, '');
+                        document.getElementById('profile-modal-description').textContent = description;
                         document.getElementById('profile-modal-edit').classList.add('hidden');
                         const modal = document.getElementById('profile-modal');
                         modal.classList.remove('hidden');
@@ -598,10 +653,14 @@
                         return response.json();
                     })
                     .then(data => {
+                        justOpenedModal = true;
                         document.getElementById('profile-modal-image').src = data.image || '{% static "chat/group.png" %}';
                         document.getElementById('profile-modal-title').textContent = data.name;
                         document.getElementById('profile-modal-username').textContent = '';
-                        document.getElementById('profile-modal-description').textContent = data.description || 'بدون توضیحات';
+                        // فیلتر کردن کاراکترهای اضافی
+                        let description = data.description || '';
+                        description = description.replace(/["'>]/g, '');
+                        document.getElementById('profile-modal-description').textContent = description;
                         document.getElementById('profile-modal-edit').classList.add('hidden');
                         const modal = document.getElementById('profile-modal');
                         modal.classList.remove('hidden');
@@ -795,6 +854,7 @@
         }
 
         function showImageModal(src) {
+            justOpenedModal = true;
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
             modal.innerHTML = `
@@ -980,6 +1040,7 @@
                     }
                 })
                 .catch(() => {
+                    justOpenedModal = true;
                     const modal = document.getElementById('login-modal');
                     modal.classList.remove('hidden');
                     setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
@@ -991,6 +1052,70 @@
             pollingInterval = setInterval(fetchMessages, 5000);
         }
 
+        function toggleHeaderMenu() {
+            const menu = document.getElementById('header-menu');
+            if (menu.classList.contains('show')) {
+                menu.classList.remove('show');
+                setTimeout(() => menu.classList.add('hidden'), 300);
+            } else {
+                menu.classList.remove('hidden');
+                setTimeout(() => menu.classList.add('show'), 10);
+            }
+        }
+
+        function isClickNearElement(event, element, margin = 8) {
+            const rect = element.getBoundingClientRect();
+            const x = event.clientX;
+            const y = event.clientY;
+            return (
+                x >= rect.left - margin &&
+                x <= rect.right + margin &&
+                y >= rect.top - margin &&
+                y <= rect.bottom + margin
+            );
+        }
+
+        function closeAllModalsAndMenus(event) {
+            const headerMenu = document.getElementById('header-menu');
+            const headerMenuToggle = document.getElementById('header-menu-toggle');
+            const modals = [
+                'login-modal',
+                'edit-profile-modal',
+                'create-group-modal',
+                'join-group-modal',
+                'download-modal',
+                'profile-modal'
+            ];
+
+            if (headerMenu.classList.contains('show') && !isClickNearElement(event, headerMenuToggle, 8)) {
+                headerMenu.classList.remove('show');
+                setTimeout(() => headerMenu.classList.add('hidden'), 300);
+            }
+
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (!modal.classList.contains('hidden') && !justOpenedModal) {
+                    const modalContent = modal.querySelector('.modal-content, .download-modal-content, .profile-modal-content');
+                    if (!modalContent.contains(event.target)) {
+                        modal.classList.remove('show');
+                        setTimeout(() => modal.classList.add('hidden'), 300);
+                    }
+                }
+            });
+
+            justOpenedModal = false;
+        }
+
+        document.addEventListener('click', event => {
+            const headerMenuToggle = document.getElementById('header-menu-toggle');
+            if (isClickNearElement(event, headerMenuToggle, 8)) {
+                event.stopPropagation();
+                toggleHeaderMenu();
+            } else {
+                setTimeout(() => closeAllModalsAndMenus(event), 300);
+            }
+        });
+
         document.getElementById('sidebar-toggle').addEventListener('click', () => {
             document.getElementById('chat-sidebar').classList.add('translate-x-full');
         });
@@ -1001,8 +1126,8 @@
 
         document.getElementById('private-tab').addEventListener('click', () => {
             currentTab = 'private';
-            document.getElementById('private-tab').classList.add('text-purple-400', 'border-purple-400');
-            document.getElementById('group-tab').classList.remove('text-purple-400', 'border-purple-400');
+            document.getElementById('private-tab').classList.add('text-cyan-400', 'border-cyan-400');
+            document.getElementById('group-tab').classList.remove('text-cyan-400', 'border-cyan-400');
             document.getElementById('private-chats').classList.remove('hidden');
             document.getElementById('groups').classList.add('hidden');
             fetchPrivateChats();
@@ -1010,8 +1135,8 @@
 
         document.getElementById('group-tab').addEventListener('click', () => {
             currentTab = 'group';
-            document.getElementById('group-tab').classList.add('text-purple-400', 'border-purple-400');
-            document.getElementById('private-tab').classList.remove('text-purple-400', 'border-purple-400');
+            document.getElementById('group-tab').classList.add('text-cyan-400', 'border-cyan-400');
+            document.getElementById('private-tab').classList.remove('text-cyan-400', 'border-cyan-400');
             document.getElementById('groups').classList.remove('hidden');
             document.getElementById('private-chats').classList.add('hidden');
             fetchGroups();
@@ -1021,25 +1146,28 @@
             searchUsersOrGroups(e.target.value);
         });
 
-        document.getElementById('header-menu-toggle').addEventListener('click', () => {
-            document.getElementById('header-menu').classList.toggle('hidden');
-        });
-
-        document.getElementById('create-group').addEventListener('click', () => {
-            document.getElementById('header-menu').classList.add('hidden');
+        document.getElementById('create-group').addEventListener('click', e => {
+            e.stopPropagation();
+            justOpenedModal = true;
+            document.getElementById('header-menu').classList.remove('show');
+            setTimeout(() => document.getElementById('header-menu').classList.add('hidden'), 300);
             const modal = document.getElementById('create-group-modal');
             modal.classList.remove('hidden');
             setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
         });
 
-        document.getElementById('join-group').addEventListener('click', () => {
-            document.getElementById('header-menu').classList.add('hidden');
+        document.getElementById('join-group').addEventListener('click', e => {
+            e.stopPropagation();
+            justOpenedModal = true;
+            document.getElementById('header-menu').classList.remove('show');
+            setTimeout(() => document.getElementById('header-menu').classList.add('hidden'), 300);
             const modal = document.getElementById('join-group-modal');
             modal.classList.remove('hidden');
             setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
         });
 
-        document.getElementById('logout').addEventListener('click', () => {
+        document.getElementById('logout').addEventListener('click', e => {
+            e.stopPropagation();
             fetch('/api/users/logout/', {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCsrfToken() }
@@ -1047,7 +1175,8 @@
                 .then(response => response.json())
                 .then(data => {
                     localStorage.removeItem('user_id');
-                    document.getElementById('header-menu').classList.add('hidden');
+                    document.getElementById('header-menu').classList.remove('show');
+                    setTimeout(() => document.getElementById('header-menu').classList.add('hidden'), 300);
                     const modal = document.getElementById('login-modal');
                     modal.classList.remove('hidden');
                     setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
@@ -1063,7 +1192,8 @@
                 });
         });
 
-        document.getElementById('login-submit').addEventListener('click', () => {
+        document.getElementById('login-submit').addEventListener('click', e => {
+            e.stopPropagation();
             const username = document.getElementById('login-username').value.trim();
             const displayName = document.getElementById('login-display-name').value.trim();
             const password = document.getElementById('login-password').value;
@@ -1100,11 +1230,18 @@
                 });
         });
 
-        document.getElementById('profile-image').addEventListener('click', showUserProfile);
+        document.getElementById('profile-image').addEventListener('click', e => {
+            e.stopPropagation();
+            showUserProfile();
+        });
 
-        document.getElementById('chat-image').addEventListener('click', showChatProfile);
+        document.getElementById('chat-image').addEventListener('click', e => {
+            e.stopPropagation();
+            showChatProfile();
+        });
 
-        document.getElementById('edit-profile-submit').addEventListener('click', () => {
+        document.getElementById('edit-profile-submit').addEventListener('click', e => {
+            e.stopPropagation();
             const username = document.getElementById('edit-username').value.trim();
             const displayName = document.getElementById('edit-display-name').value.trim();
             const password = document.getElementById('edit-password').value;
@@ -1138,11 +1275,13 @@
                 });
         });
 
-        document.getElementById('edit-profile-cancel').addEventListener('click', () => {
+        document.getElementById('edit-profile-cancel').addEventListener('click', e => {
+            e.stopPropagation();
             document.getElementById('edit-profile-modal').classList.add('hidden');
         });
 
-        document.getElementById('create-group-submit').addEventListener('click', () => {
+        document.getElementById('create-group-submit').addEventListener('click', e => {
+            e.stopPropagation();
             const name = document.getElementById('group-name').value.trim();
             const description = document.getElementById('group-description').value.trim();
             const password = document.getElementById('group-password').value;
@@ -1173,7 +1312,8 @@
                 });
         });
 
-        document.getElementById('create-group-cancel').addEventListener('click', () => {
+        document.getElementById('create-group-cancel').addEventListener('click', e => {
+            e.stopPropagation();
             document.getElementById('create-group-modal').classList.add('hidden');
         });
 
@@ -1208,7 +1348,8 @@
                 });
         });
 
-        document.getElementById('join-group-submit').addEventListener('click', () => {
+        document.getElementById('join-group-submit').addEventListener('click', e => {
+            e.stopPropagation();
             const groupId = document.getElementById('join-group-id').value;
             const password = document.getElementById('join-group-password').value;
             if (!groupId) {
@@ -1239,34 +1380,46 @@
                 });
         });
 
-        document.getElementById('join-group-cancel').addEventListener('click', () => {
+        document.getElementById('join-group-cancel').addEventListener('click', e => {
+            e.stopPropagation();
             document.getElementById('join-group-modal').classList.add('hidden');
         });
 
-        document.getElementById('file-upload').addEventListener('click', () => {
+        document.getElementById('file-upload').addEventListener('click', e => {
+            e.stopPropagation();
             document.getElementById('file-input').click();
         });
 
         document.getElementById('file-input').addEventListener('change', handleFileSelect);
 
-        document.getElementById('send-message').addEventListener('click', () => sendMessageWithFiles());
-
-        document.getElementById('message-input').addEventListener('keypress', e => {
-            if (e.key === 'Enter') sendMessageWithFiles();
+        document.getElementById('send-message').addEventListener('click', e => {
+            e.stopPropagation();
+            sendMessageWithFiles();
         });
 
-        document.getElementById('download-cancel').addEventListener('click', () => {
+        document.getElementById('message-input').addEventListener('keypress', e => {
+            if (e.key === 'Enter') {
+                e.stopPropagation();
+                sendMessageWithFiles();
+            }
+        });
+
+        document.getElementById('download-cancel').addEventListener('click', e => {
+            e.stopPropagation();
             document.getElementById('download-modal').classList.add('hidden');
         });
 
-        document.getElementById('profile-modal-edit').addEventListener('click', () => {
+        document.getElementById('profile-modal-edit').addEventListener('click', e => {
+            e.stopPropagation();
+            justOpenedModal = true;
             document.getElementById('profile-modal').classList.add('hidden');
             const modal = document.getElementById('edit-profile-modal');
             modal.classList.remove('hidden');
             setTimeout(() => modal.querySelector('.modal-content').classList.add('show'), 10);
         });
 
-        document.getElementById('profile-modal-close').addEventListener('click', () => {
+        document.getElementById('profile-modal-close').addEventListener('click', e => {
+            e.stopPropagation();
             document.getElementById('profile-modal').classList.add('hidden');
         });
 
