@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/messages/<int:pk>/', views.MessageDetailView.as_view(), name='message_detail'),
     path('api/messages/seen/', views.MessageSeenView.as_view(), name='message_seen'),
     path('api/groups/', views.GroupView.as_view(), name='group_list'),
+    path('api/groups/<int:pk>/', views.GroupDetailView.as_view(), name='group_detail'),
     path('api/groups/join/', views.GroupJoinView.as_view(), name='group_join'),
     path('api/groups/search/', views.GroupSearchView.as_view(), name='group_search'),
     path('api/upload/', views.UploadView.as_view(), name='file_upload'),

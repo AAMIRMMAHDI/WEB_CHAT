@@ -1,6 +1,6 @@
-# chat/models.py
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
+from django.core.files.storage import default_storage
 import random
 
 class User(models.Model):
@@ -8,6 +8,7 @@ class User(models.Model):
     display_name = models.CharField(max_length=150, blank=True, null=True)
     password = models.CharField(max_length=128)
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
     is_online = models.BooleanField(default=False)
     last_login = models.DateTimeField(null=True, blank=True, auto_now=True)
     created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
@@ -31,6 +32,7 @@ class User(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['username']),
+            models.Index(fields=['is_online']),
         ]
 
 class Group(models.Model):
@@ -48,7 +50,9 @@ class Group(models.Model):
         super().save(*args, **kwargs)
 
     def check_password(self, raw_password):
-        return check_password(raw_password, self.password) if self.password else not raw_password
+        if not self.password:
+            return not raw_password
+        return check_password(raw_password, self.password)
 
     def __str__(self):
         return self.name
@@ -56,6 +60,7 @@ class Group(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['name']),
+            models.Index(fields=['creator']),
         ]
 
 class Message(models.Model):
@@ -77,6 +82,7 @@ class Message(models.Model):
             models.Index(fields=['group']),
             models.Index(fields=['sender', 'timestamp']),
             models.Index(fields=['recipient', 'timestamp']),
+            models.Index(fields=['group', 'timestamp']),
         ]
 
 class File(models.Model):
@@ -93,7 +99,13 @@ class File(models.Model):
     def __str__(self):
         return self.file.name
 
+    def delete(self, *args, **kwargs):
+        if self.file and default_storage.exists(self.file.name):
+            default_storage.delete(self.file.name)
+        super().delete(*args, **kwargs)
+
     class Meta:
         indexes = [
             models.Index(fields=['uploaded_at']),
+            models.Index(fields=['file_type']),
         ]

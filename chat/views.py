@@ -13,15 +13,16 @@ import django.db.models as models
 from django.utils import timezone
 from django.core.cache import cache
 from PIL import Image
-import subprocess
+import logging
+import random
+
+logger = logging.getLogger(__name__)
 
 def index(request):
-    """Render the main index page."""
     return render(request, 'index.html')
 
 class UserView(APIView):
     def post(self, request):
-        """Handle user login or registration."""
         data = request.data
         username = data.get('username')
         display_name = data.get('display_name')
@@ -38,13 +39,15 @@ class UserView(APIView):
             if user.check_password(password):
                 request.session['user_id'] = user.id
                 user.is_online = True
+                user.last_login = timezone.now()
                 user.save()
                 return Response({
                     'status': 'success',
                     'user_id': user.id,
                     'username': user.username,
                     'display_name': user.display_name,
-                    'profile_image': user.profile_image.url if user.profile_image else None
+                    'profile_image': user.profile_image.url if user.profile_image else None,
+                    'description': user.description or ''
                 })
             else:
                 return Response(
@@ -62,11 +65,11 @@ class UserView(APIView):
             'user_id': user.id,
             'username': user.username,
             'display_name': user.display_name,
-            'profile_image': user.profile_image.url if user.profile_image else None
+            'profile_image': user.profile_image.url if user.profile_image else None,
+            'description': user.description or ''
         })
 
     def get(self, request):
-        """Retrieve users, optionally filtered by search query."""
         query = request.GET.get('search', '')
         users = User.objects.filter(username__icontains=query).exclude(id=request.session.get('user_id'))
         serializer = UserSerializer(users, many=True)
@@ -74,14 +77,12 @@ class UserView(APIView):
 
 class UserDetailView(APIView):
     def get(self, request, pk):
-        """Retrieve a specific user's details."""
         user = get_object_or_404(User, pk=pk)
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
 class UserCurrentView(APIView):
     def get(self, request):
-        """Retrieve the current logged-in user's details."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -93,7 +94,6 @@ class UserCurrentView(APIView):
         return Response(serializer.data)
 
     def patch(self, request):
-        """Update the current user's profile."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -103,6 +103,8 @@ class UserCurrentView(APIView):
         user = get_object_or_404(User, id=user_id)
 
         if 'profile_image' in request.FILES:
+            if user.profile_image:
+                default_storage.delete(user.profile_image.name)
             user.profile_image = request.FILES['profile_image']
             user.save()
             return Response({
@@ -114,6 +116,7 @@ class UserCurrentView(APIView):
         username = data.get('username')
         display_name = data.get('display_name')
         password = data.get('password')
+        description = data.get('description', '')
 
         if username:
             user.username = username
@@ -121,17 +124,19 @@ class UserCurrentView(APIView):
             user.display_name = display_name
         if password:
             user.set_password(password)
+        if description:
+            user.description = description
         user.save()
         return Response({
             'status': 'success',
             'username': user.username,
             'display_name': user.display_name,
-            'profile_image': user.profile_image.url if user.profile_image else None
+            'profile_image': user.profile_image.url if user.profile_image else None,
+            'description': user.description
         })
 
 class UserChattedView(APIView):
     def get(self, request):
-        """Retrieve users the current user has chatted with."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -157,12 +162,11 @@ class UserChattedView(APIView):
 
         users = User.objects.filter(id__in=user_ids)
         serializer = UserSerializer(users, many=True)
-        cache.set(cache_key, serializer.data, timeout=60*15)  # کش برای 15 دقیقه
+        cache.set(cache_key, serializer.data, timeout=60*15)
         return Response({'users': serializer.data})
 
 class GroupView(APIView):
     def get(self, request):
-        """Retrieve groups the current user is a member of."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -177,11 +181,10 @@ class GroupView(APIView):
 
         groups = Group.objects.filter(members__id=user_id)
         serializer = GroupSerializer(groups, many=True)
-        cache.set(cache_key, serializer.data, timeout=60*15)  # کش برای 15 دقیقه
+        cache.set(cache_key, serializer.data, timeout=60*15)
         return Response(serializer.data)
 
     def post(self, request):
-        """Create a new group."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -206,12 +209,23 @@ class GroupView(APIView):
             group.image = image
         group.save()
         group.members.add(user_id)
-        cache.delete(f'groups_{user_id}')  # پاک کردن کش پس از ایجاد گروه
+        cache.delete(f'groups_{user_id}')
         return Response({'status': 'success', 'group_id': group.id})
+
+class GroupDetailView(APIView):
+    def get(self, request, pk):
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response(
+                {'status': 'error', 'message': 'کاربر وارد نشده است'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        group = get_object_or_404(Group, pk=pk, members__id=user_id)
+        serializer = GroupSerializer(group)
+        return Response(serializer.data)
 
 class GroupSearchView(APIView):
     def get(self, request):
-        """Search for groups by name."""
         query = request.GET.get('search', '')
         groups = Group.objects.filter(name__icontains=query)
         serializer = GroupSerializer(groups, many=True)
@@ -219,7 +233,6 @@ class GroupSearchView(APIView):
 
 class GroupJoinView(APIView):
     def post(self, request):
-        """Handle joining a group."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -244,12 +257,11 @@ class GroupJoinView(APIView):
             )
 
         group.members.add(user_id)
-        cache.delete(f'groups_{user_id}')  # پاک کردن کش پس از پیوستن به گروه
+        cache.delete(f'groups_{user_id}')
         return Response({'status': 'success', 'group_id': group.id})
 
 class MessageView(APIView):
     def get(self, request):
-        """Retrieve messages for the current user."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -308,7 +320,6 @@ class MessageView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        """Send a new message with optional files."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -372,7 +383,6 @@ class MessageView(APIView):
 
 class MessageDetailView(APIView):
     def patch(self, request, pk):
-        """Edit a message if the user is the sender."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -401,7 +411,6 @@ class MessageDetailView(APIView):
         return Response({'status': 'success', 'message': serializer.data})
 
     def delete(self, request, pk):
-        """Delete a message if the user is the sender."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -421,7 +430,6 @@ class MessageDetailView(APIView):
 
 class UploadView(APIView):
     def post(self, request):
-        """Handle file uploads with compression."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -436,7 +444,7 @@ class UploadView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        max_size = 20 * 1024 * 1024 * 1024  # 20 گیگابایت
+        max_size = 20 * 1024 * 1024 * 1024
         file_ids = []
         for file in files:
             if file.size > max_size:
@@ -445,77 +453,61 @@ class UploadView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # ذخیره فایل اولیه
-            file_path = os.path.join('uploads', file.name)
+            file_extension = os.path.splitext(file.name)[1]
+            unique_filename = f"{timezone.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}{file_extension}"
+            file_path = os.path.join('uploads', unique_filename)
+
             try:
                 saved_path = default_storage.save(file_path, file)
                 file_url = default_storage.url(saved_path)
                 full_path = os.path.join(settings.MEDIA_ROOT, saved_path)
             except Exception as e:
+                logger.error(f"Error saving file {file.name}: {str(e)}")
                 return Response(
                     {'status': 'error', 'message': f'خطا در ذخیره فایل {file.name}: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-            # تعیین نوع فایل
             file_type = 'other'
             if file.content_type.startswith('image'):
                 file_type = 'image'
-                # فشرده‌سازی تصویر با Pillow
                 try:
                     with Image.open(full_path) as img:
                         img = img.convert('RGB')
-                        output_path = full_path.replace(file.name, f"compressed_{file.name}")
+                        output_path = full_path.replace(unique_filename, f"compressed_{unique_filename}")
                         img.save(output_path, quality=60, optimize=True)
-                        saved_path = saved_path.replace(file.name, f"compressed_{file.name}")
-                        os.remove(full_path)  # حذف فایل اصلی
+                        saved_path = saved_path.replace(unique_filename, f"compressed_{unique_filename}")
+                        if default_storage.exists(full_path):
+                            default_storage.delete(full_path)
                 except Exception as e:
+                    logger.error(f"Error compressing image {file.name}: {str(e)}")
+                    if default_storage.exists(saved_path):
+                        default_storage.delete(saved_path)
                     return Response(
                         {'status': 'error', 'message': f'خطا در فشرده‌سازی تصویر {file.name}: {str(e)}'},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
-
             elif file.content_type.startswith('video'):
                 file_type = 'video'
-                # فشرده‌سازی ویدیو با ffmpeg
-                try:
-                    output_path = full_path.replace(file.name, f"compressed_{file.name}")
-                    subprocess.run([
-                        'ffmpeg', '-i', full_path, '-vcodec', 'libx264', '-crf', '28', '-preset', 'fast',
-                        '-acodec', 'aac', '-b:a', '128k', output_path
-                    ], check=True)
-                    saved_path = saved_path.replace(file.name, f"compressed_{file.name}")
-                    os.remove(full_path)  # حذف فایل اصلی
-                except Exception as e:
-                    return Response(
-                        {'status': 'error', 'message': f'خطا در فشرده‌سازی ویدیو {file.name}: {str(e)}'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
-
             elif file.content_type.startswith('audio'):
                 file_type = 'audio'
-                # فشرده‌سازی صوت با ffmpeg
-                try:
-                    output_path = full_path.replace(file.name, f"compressed_{file.name}")
-                    subprocess.run([
-                        'ffmpeg', '-i', full_path, '-acodec', 'mp3', '-b:a', '128k', output_path
-                    ], check=True)
-                    saved_path = saved_path.replace(file.name, f"compressed_{file.name}")
-                    os.remove(full_path)  # حذف فایل اصلی
-                except Exception as e:
-                    return Response(
-                        {'status': 'error', 'message': f'خطا در فشرده‌سازی صوت {file.name}: {str(e)}'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
 
-            file_obj = File.objects.create(file=saved_path, file_type=file_type)
-            file_ids.append(file_obj.id)
+            try:
+                file_obj = File.objects.create(file=saved_path, file_type=file_type)
+                file_ids.append(file_obj.id)
+            except Exception as e:
+                logger.error(f"Error creating File object for {saved_path}: {str(e)}")
+                if default_storage.exists(saved_path):
+                    default_storage.delete(saved_path)
+                return Response(
+                    {'status': 'error', 'message': f'خطا در ثبت فایل {file.name}: {str(e)}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
         return Response({'status': 'success', 'file_ids': file_ids})
 
 class MessageSeenView(APIView):
     def post(self, request):
-        """Mark messages as delivered or read."""
         user_id = request.session.get('user_id')
         if not user_id:
             return Response(
@@ -572,11 +564,10 @@ class MessageSeenView(APIView):
 
 class LogoutView(APIView):
     def post(self, request):
-        """Log out the current user."""
         user_id = request.session.get('user_id')
         if user_id:
             user = get_object_or_404(User, id=user_id)
             user.is_online = False
             user.save()
-            del request.session['user_id']
+            request.session.flush()
         return Response({'status': 'success'})

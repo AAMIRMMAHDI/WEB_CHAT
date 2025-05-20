@@ -1,11 +1,10 @@
-# chat/serializers.py
 from rest_framework import serializers
 from .models import User, Group, Message, File
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'display_name', 'profile_image', 'is_online']
+        fields = ['id', 'username', 'display_name', 'profile_image', 'is_online', 'description']
 
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,23 +37,24 @@ class MessageSerializer(serializers.ModelSerializer):
         queryset=Group.objects.all(), source='group', write_only=True, required=False, allow_null=True
     )
     files = FileSerializer(many=True, read_only=True)
-    file_urls = serializers.ListField(
-        child=serializers.DictField(), write_only=True, required=False
+    file_ids = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True, required=False, default=[]
     )
 
     class Meta:
         model = Message
-        fields = ['id', 'sender', 'recipient', 'group', 'sender_id', 'recipient_id', 'group_id', 'content', 'timestamp', 'delivered_at', 'read_at', 'files', 'file_urls']
+        fields = ['id', 'sender', 'recipient', 'group', 'sender_id', 'recipient_id', 'group_id', 'content', 'timestamp', 'delivered_at', 'read_at', 'files', 'file_ids']
 
     def get_sender(self, obj):
-        return {'id': obj.sender.id, 'username': obj.sender.username, 'display_name': obj.sender.display_name}
+        return UserSerializer(obj.sender).data
 
     def get_recipient(self, obj):
-        if obj.recipient:
-            return {'id': obj.recipient.id, 'username': obj.recipient.username, 'display_name': obj.recipient.display_name}
-        return None
+        return UserSerializer(obj.recipient).data if obj.recipient else None
 
     def get_group(self, obj):
-        if obj.group:
-            return {'id': obj.group.id, 'name': obj.group.name}
-        return None
+        return {'id': obj.group.id, 'name': obj.group.name} if obj.group else None
+
+    def validate(self, data):
+        if not data.get('content') and not data.get('file_ids'):
+            raise serializers.ValidationError("محتوا یا فایل الزامی است")
+        return data
