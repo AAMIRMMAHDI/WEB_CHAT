@@ -82,6 +82,12 @@
             line-height: 1.5;
             margin-bottom: 0.3rem;
         }
+        .message-sender {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
         .message-ticks {
             position: absolute;
             bottom: 0.3rem;
@@ -574,7 +580,8 @@
                             src: el.src || el.href
                         })),
                         sender: {
-                            id: msg.classList.contains('justify-end') ? getCurrentUserId() : null
+                            id: msg.classList.contains('justify-end') ? getCurrentUserId() : null,
+                            display_name: msg.querySelector('.message-sender')?.textContent || ''
                         }
                     });
                 }
@@ -603,6 +610,7 @@
                     }).join('');
                     messageElement.innerHTML = `
                         <div class="message-bubble ${isSender ? 'sent' : 'received'}">
+                            <p class="message-sender">${msg.sender.display_name}</p>
                             <p class="message-content">${msg.content}</p>
                             ${filesHtml}
                             <p class="text-xs text-gray-400">${msg.timestamp}</p>
@@ -1029,8 +1037,10 @@
                                 return `<a href="${file.file}" class="text-blue-400 underline mt-2 block">دانلود فایل</a>`;
                             }).join('');
                             const timestamp = new Date(msg.timestamp).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+                            const senderName = msg.sender.display_name || msg.sender.username;
                             messageElement.innerHTML = `
                                 <div class="message-bubble ${isSender ? 'sent' : 'received'}">
+                                    <p class="message-sender">${senderName}</p>
                                     <p class="message-content">${content}</p>
                                     ${filesHtml}
                                     <p class="text-xs text-gray-400">${timestamp}</p>
