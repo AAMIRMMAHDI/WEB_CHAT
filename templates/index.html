@@ -18,7 +18,7 @@
         }
         body {
             background: #1a1a1a;
-            color: rgb(250, 164, 164);
+            color: #ffffff;
             overflow: hidden;
             height: 100vh;
             min-height: 100vh;
@@ -26,7 +26,7 @@
             flex-direction: row;
         }
         .gradient-bg {
-            background: linear-gradient(135deg, #1e3a8a, #1e1e2f);
+            background: linear-gradient(135deg, #3B82F6, #1e293b);
             min-height: 100vh;
             width: 100%;
             display: flex;
@@ -35,7 +35,7 @@
         .glass-effect {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
             transition: all 0.3s ease;
         }
         .message {
@@ -64,7 +64,7 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .message-bubble.sent {
-            background: #b3e5fc;
+            background: #93c5fd;
             border-radius: 15px 15px 0 15px;
             color: #000;
         }
@@ -93,7 +93,7 @@
             bottom: 0.3rem;
             left: 0.6rem;
             font-size: 0.7rem;
-            color: #4fc3f7;
+            color: #3B82F6;
         }
         .message-ticks.delivered::before {
             content: '✓';
@@ -135,27 +135,27 @@
             font-size: 1rem;
             border-radius: 15px;
             background: #2d3748;
-            color: #4fc3f7;
+            color: #3B82F6;
         }
         #file-upload, #send-message {
             padding: 0.8rem;
             font-size: 1.2rem;
             border-radius: 50%;
-            background: rgba(79, 195, 247, 0.2);
-            color: #4fc3f7;
+            background: rgba(59, 130, 246, 0.2);
+            color: #3B82F6;
         }
         .glass-button {
-            background: rgba(79, 195, 247, 0.2);
+            background: rgba(59, 130, 246, 0.2);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(79, 195, 247, 0.4);
-            color: #4fc3f7;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #3B82F6;
             padding: 0.8rem 1.5rem;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
         .glass-button:hover {
-            background: rgba(79, 195, 247, 0.3);
+            background: rgba(59, 130, 246, 0.3);
             transform: translateY(-2px);
         }
         .modal-content, .download-modal-content, .profile-modal-content {
@@ -185,13 +185,13 @@
         }
         .download-icon {
             font-size: 1.2rem;
-            color: #4fc3f7;
+            color: #3B82F6;
             padding: 0.5rem;
             border-radius: 50%;
-            background: rgba(79, 195, 247, 0.2);
+            background: rgba(59, 130, 246, 0.2);
         }
         .download-icon:hover {
-            background: rgba(79, 195, 247, 0.3);
+            background: rgba(59, 130, 246, 0.3);
             transform: scale(1.1);
         }
         .search-container {
@@ -234,12 +234,12 @@
             transition: background 0.2s ease;
         }
         #header-menu button:hover {
-            background: rgba(79, 195, 247, 0.2);
+            background: rgba(59, 130, 246, 0.2);
         }
         .progress-circle {
             width: 24px;
             height: 24px;
-            border: 3px solid #4fc3f7;
+            border: 3px solid #3B82F6;
             border-top: 3px solid transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -253,7 +253,7 @@
         }
         .progress-text {
             font-size: 0.7rem;
-            color: #4fc3f7;
+            color: #3B82F6;
             position: absolute;
             bottom: 8px;
             left: 40px;
@@ -377,7 +377,7 @@
             </div>
         </div>
         <div class="flex border-b border-gray-700">
-            <button id="private-tab" class="flex-1 p-2 text-center font-semibold text-cyan-400 border-b-2 border-cyan-400">خصوصی</button>
+            <button id="private-tab" class="flex-1 p-2 text-center font-semibold text-3B82F6 border-b-2 border-3B82F6">خصوصی</button>
             <button id="group-tab" class="flex-1 p-2 text-center font-semibold text-gray-400 border-b-2 border-transparent">گروه</button>
         </div>
         <div id="sidebar-content" class="overflow-y-auto p-2" style="max-height: calc(100vh - 180px);">
@@ -1131,10 +1131,10 @@
                 currentTab = 'private';
                 currentGroupId = null;
                 clearMessages();
-                document.getElementById('private-tab').classList.add('text-cyan-400', 'border-cyan-400');
+                document.getElementById('private-tab').classList.add('text-3B82F6', 'border-3B82F6');
                 document.getElementById('private-tab').classList.remove('text-gray-400', 'border-transparent');
                 document.getElementById('group-tab').classList.add('text-gray-400', 'border-transparent');
-                document.getElementById('group-tab').classList.remove('text-cyan-400', 'border-cyan-400');
+                document.getElementById('group-tab').classList.remove('text-3B82F6', 'border-3B82F6');
                 document.getElementById('private-chats').classList.remove('hidden');
                 document.getElementById('groups').classList.add('hidden');
                 document.getElementById('chat-title').textContent = 'چت خصوصی';
@@ -1148,10 +1148,10 @@
                 currentTab = 'group';
                 currentPrivateUserId = null;
                 clearMessages();
-                document.getElementById('group-tab').classList.add('text-cyan-400', 'border-cyan-400');
+                document.getElementById('group-tab').classList.add('text-3B82F6', 'border-3B82F6');
                 document.getElementById('group-tab').classList.remove('text-gray-400', 'border-transparent');
                 document.getElementById('private-tab').classList.add('text-gray-400', 'border-transparent');
-                document.getElementById('private-tab').classList.remove('text-cyan-400', 'border-cyan-400');
+                document.getElementById('private-tab').classList.remove('text-3B82F6', 'border-3B82F6');
                 document.getElementById('groups').classList.remove('hidden');
                 document.getElementById('private-chats').classList.add('hidden');
                 document.getElementById('chat-title').textContent = 'چت گروهی';
